@@ -34,7 +34,7 @@ const App: React.FC = () => {
             const room: RoomInfo = {
                 id: roomId,
                 topicName: roomId, // Default topic name
-                isPublic: true, // Assume public or let config override
+                isPublic: false, // Default to Private for URL-based joins for better privacy
                 onlineCount: 0,
                 lastActivity: Date.now()
             };

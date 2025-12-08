@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { UserProfile, RoomInfo } from '../types';
 import { generateUUID, compressImage, generateShortId } from '../utils/helpers';
-import { Users, Lock, Globe, LogIn, Upload } from 'lucide-react';
+import { Users, Lock, Globe, LogIn, Upload, ShieldAlert, Info } from 'lucide-react';
 import clsx from 'clsx';
 
 interface LobbyProps {
@@ -77,7 +77,21 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
         {/* Left: Configuration */}
         <div className="bg-chrome-800 p-8 rounded-2xl border border-chrome-600 shadow-2xl">
           <h1 className="text-3xl font-bold text-chrome-100 mb-2">Dark MQTT Chat</h1>
-          <p className="text-chrome-300 mb-8">基于 EMQX 的安全、极简、暗黑风格聊天室。</p>
+          
+          <div className="bg-yellow-900/20 border border-yellow-700/50 p-4 rounded-lg mb-6 text-xs text-yellow-200/80">
+             <h3 className="font-bold flex items-center gap-2 mb-2 text-yellow-100">
+               <ShieldAlert size={14} /> 隐私与安全须知
+             </h3>
+             <ul className="space-y-1 list-disc list-inside">
+               <li>基于 EMQX 免费公共服务器，无需注册，完全匿名。</li>
+               <li><strong>注意：</strong> 消息未端到端加密，请勿发送密码等敏感信息。</li>
+               <li>私密房间 ID 即为“密钥”，请妥善保管，避免泄露。</li>
+               <li>
+                   Tip: 使用 URL <code className="bg-black/30 px-1 rounded select-all">?room=任意ID</code> 
+                   可快速创建或加入私密房间。
+               </li>
+             </ul>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             
@@ -156,6 +170,14 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
                     <Globe size={16} /> 公开大厅
                   </button>
                </div>
+               
+               <p className="text-xs text-chrome-400 flex items-start gap-1">
+                   <Info size={12} className="mt-0.5 flex-shrink-0" />
+                   {isPublic 
+                     ? "公开房间将显示在右侧列表，所有人可见。" 
+                     : "私密房间不显示在列表，需通过 ID 或 URL 进入。"
+                   }
+               </p>
             </div>
 
             {error && <p className="text-red-400 text-sm text-center">{error}</p>}

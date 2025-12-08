@@ -181,7 +181,7 @@ export class MqttService {
   // Explicitly delete lobby entry
   clearPublicRoomListing(roomId: string) {
       if (!this.client) return;
-      this.client.publish(`darkmqtt/lobby/${roomId}`, new Uint8Array(0), { retain: true });
+      this.client.publish(`darkmqtt/lobby/${roomId}`, '', { retain: true });
   }
 
   setCallbacks(callbacks: typeof this.callbacks) {

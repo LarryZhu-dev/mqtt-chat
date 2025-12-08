@@ -4,21 +4,52 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DarkMqttChat</title>
-  <script type="importmap">
-{
-  "imports": {
-    "clsx": "https://aistudiocdn.com/clsx@^2.1.1",
-    "vite": "https://aistudiocdn.com/vite@^7.2.7",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
-    "react/": "https://aistudiocdn.com/react@^19.2.1/",
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.2",
-    "mqtt": "https://aistudiocdn.com/mqtt@^5.14.1"
-  }
-}
-</script>
-</head>
+    
+    <!-- 1. Suppress Tailwind Production Warning & Apply Custom Theme for CDN mode -->
+    <script>
+      // This config mirrors tailwind.config.js to ensure CDN rendering matches the build
+      window.tailwind = {
+        config: {
+          theme: {
+            extend: {
+              colors: {
+                chrome: {
+                  900: '#202124', // Background
+                  800: '#292a2d', // Surface/Cards
+                  700: '#35363a', // Hover states
+                  600: '#5f6368', // Borders
+                  300: '#9aa0a6', // Secondary Text
+                  100: '#e8eaed', // Primary Text
+                },
+                accent: {
+                  DEFAULT: '#8ab4f8', // Link/Action blue
+                  hover: '#aecbfa',
+                }
+              }
+            }
+          }
+        }
+      }
+    </script>
+    
+    <!-- 2. Tailwind CSS CDN (Fallback/Dev Compatibility) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "clsx": "https://aistudiocdn.com/clsx@^2.1.1",
+        "vite": "https://aistudiocdn.com/vite@^7.2.7",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+        "react/": "https://aistudiocdn.com/react@^19.2.1/",
+        "react": "https://aistudiocdn.com/react@^19.2.1",
+        "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
+        "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.2",
+        "mqtt": "https://aistudiocdn.com/mqtt@^5.14.1"
+      }
+    }
+    </script>
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>

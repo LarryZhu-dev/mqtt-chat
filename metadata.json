@@ -1,0 +1,5 @@
+{
+  "name": "DarkMqttChat",
+  "description": "A secure, feature-rich dark mode chat application powered by EMQX MQTT broker with room management, multimedia support, and reactions.",
+  "requestFramePermissions": []
+}

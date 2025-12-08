@@ -27,6 +27,14 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
      if(!roomIdInput) setRoomIdInput(generateShortId(6));
   }, []);
 
+  // Sync state when initialUser loads from localStorage (Async in App.tsx)
+  useEffect(() => {
+    if (initialUser) {
+      if (initialUser.username) setUsername(initialUser.username);
+      if (initialUser.avatarBase64) setAvatar(initialUser.avatarBase64);
+    }
+  }, [initialUser]);
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       try {

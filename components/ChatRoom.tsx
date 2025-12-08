@@ -5,7 +5,7 @@ import { MqttService } from '../services/mqttService';
 import { generateUUID } from '../utils/helpers';
 import { InputArea } from './InputArea';
 import { MessageBubble } from './MessageBubble';
-import { LogOut, Trash2, Users, Settings, Lock, Globe, Check, X, ShieldAlert, Wifi, WifiOff, Clock } from 'lucide-react';
+import { LogOut, Trash2, Users, Settings, Lock, Globe, Check, X, ShieldAlert, Wifi, WifiOff, Clock, Copy, Link as LinkIcon } from 'lucide-react';
 
 interface ChatRoomProps {
   user: UserProfile;
@@ -32,6 +32,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
   const [isConnected, setIsConnected] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [showUserList, setShowUserList] = useState(false);
+  
+  // Header state
+  const [isCopied, setIsCopied] = useState(false);
   
   // Global Context Menu
   const [globalContextMenu, setGlobalContextMenu] = useState<{x: number, y: number} | null>(null);
@@ -271,6 +274,16 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
 
   // --- Logic Handlers ---
 
+  const handleCopyLink = () => {
+      const url = new URL(window.location.href);
+      url.searchParams.set('room', initialRoom.id);
+      
+      navigator.clipboard.writeText(url.toString()).then(() => {
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 2000);
+      });
+  };
+
   const handleReaction = (msgId: string, reaction: Reaction) => {
       setMessages(prev => prev.map(msg => {
           if (msg.id !== msgId) return msg;
@@ -483,7 +496,16 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
                          roomConfig.isPublic ? <Globe size={14} className="text-accent" /> : <Lock size={14} className="text-chrome-300" />
                      )}
                  </h2>
-                 <p className="text-xs text-chrome-300 font-mono truncate">ID: {initialRoom.id}</p>
+                 <div className="flex items-center gap-2">
+                     <p className="text-xs text-chrome-300 font-mono truncate">ID: {initialRoom.id}</p>
+                     <button 
+                        onClick={handleCopyLink}
+                        className="text-chrome-300 hover:text-white transition"
+                        title="复制房间链接"
+                     >
+                         {isCopied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                     </button>
+                 </div>
              </div>
         </div>
         

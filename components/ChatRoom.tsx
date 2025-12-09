@@ -6,6 +6,7 @@ import { generateUUID } from '../utils/helpers';
 import { InputArea } from './InputArea';
 import { MessageBubble } from './MessageBubble';
 import { ImageLightbox } from './ImageLightbox';
+import { VipEffectsLayer } from './VipEffectsLayer';
 import { LogOut, Trash2, Users, Settings, Lock, Globe, Check, X, ShieldAlert, Wifi, WifiOff, Clock, Copy, Reply, Download, ArrowDown } from 'lucide-react';
 
 interface ChatRoomProps {
@@ -50,6 +51,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [hasUnreadMention, setHasUnreadMention] = useState(false);
   
+  // VIP Effects
+  const [activeVipEffect, setActiveVipEffect] = useState<'creator' | 'fountain' | null>(null);
+  const [vipTriggerUser, setVipTriggerUser] = useState<UserProfile | null>(null);
+  
   // Scrolling State
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -62,6 +67,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
   const activeVoteRef = useRef(activeVote);
   const onlineUsersRef = useRef(onlineUsers);
   const roomConfigRef = useRef(roomConfig);
+  // To avoid re-triggering animation on re-renders or buffered messages
+  const processedJoinEvents = useRef<Set<string>>(new Set());
 
   const offlineQueueRef = useRef<ChatMessage[]>([]);
 
@@ -151,11 +158,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
                 setHasUnreadMention(true);
             }
         }
-        
-        // Smart Scroll Handling
-        // We use a functional update in useEffect below to check fresh state, 
-        // but here we can't easily access the freshest isNearBottom without ref or effect.
-        // We will handle the side-effects in a separate useEffect on [messages].
       },
       onPresence: (payload) => {
         setOnlineUsers(prev => {
@@ -170,6 +172,32 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
              }
              return newMap;
          });
+
+         // VIP Effect Trigger Logic
+         if (payload.type === 'join' && payload.user.vipCode) {
+             const eventId = `${payload.user.clientId}-${Date.now()}`; // Pseudo unique event
+             // Simple debouncing: only trigger if we haven't seen a recent join for this user in last 5s
+             // Actually, since Date.now changes, we need to rely on the fact this callback fires once per message
+             // We can check if we are currently playing an effect to avoid overlap, or just overwrite.
+             
+             if (payload.user.vipCode === '995231030') {
+                 setVipTriggerUser(payload.user);
+                 setActiveVipEffect('creator');
+             } else if (payload.user.vipCode === 'xiaozuotvt') {
+                 setVipTriggerUser(payload.user);
+                 setActiveVipEffect('fountain');
+                 
+                 // Forced Message Logic
+                 // Wait for Danmaku to start/finish? Requirement says: 
+                 // "Then all clients (except user) will be forced to send '屙我嘴里'"
+                 // The animation is 2s fountain + 4s danmaku. Let's send it after 4s.
+                 if (payload.user.clientId !== user.clientId) {
+                     setTimeout(() => {
+                         sendMessage('屙我嘴里');
+                     }, 4000);
+                 }
+             }
+         }
       },
       onReaction: (data) => {
         handleReaction(data.targetId, data.reaction);
@@ -517,6 +545,13 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
 
   return (
     <div className="chat-layout animate-fade-in">
+      {/* VIP Animation Layer */}
+      <VipEffectsLayer 
+        effect={activeVipEffect} 
+        triggerUser={vipTriggerUser} 
+        onComplete={() => { setActiveVipEffect(null); setVipTriggerUser(null); }}
+      />
+
       {/* Header */}
       <header className="chat-header">
         <div className="flex items-center gap-4 overflow-hidden">
@@ -768,6 +803,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
                                   <div className="flex justify-between items-center" style={{ marginBottom: '4px' }}>
                                       <p style={{ fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                                           {u.username}
+                                          {u.vipCode && <span className="badge" style={{ backgroundColor: '#ffd700', color: 'black' }}>VIP</span>}
                                           {u.clientId === user.clientId && <span className="badge badge-me">ME</span>}
                                       </p>
                                       {Date.now() - u.lastSeen < 12000 ? (

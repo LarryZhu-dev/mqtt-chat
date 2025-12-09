@@ -5,12 +5,22 @@ import { ChatRoom } from './components/ChatRoom';
 import { UserProfile, RoomInfo, PublicRoomPayload } from './types';
 import { getStoredUser, saveUser, generateUUID, generateShortId, generateRandomUsername } from './utils/helpers';
 import { MqttService } from './services/mqttService';
+import { Crown, Check, X } from 'lucide-react';
+
+const VIP_STORAGE_KEY = 'wcnm_vip_code';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [currentRoom, setCurrentRoom] = useState<RoomInfo | null>(null);
   const [publicRooms, setPublicRooms] = useState<RoomInfo[]>([]);
   
+  // VIP State
+  const [showVipInput, setShowVipInput] = useState(false);
+  const [vipInputVal, setVipInputVal] = useState('');
+  const [savedVipCode, setSavedVipCode] = useState<string | undefined>(
+      localStorage.getItem(VIP_STORAGE_KEY) || undefined
+  );
+
   // Initialize User & Check URL Params
   useEffect(() => {
     // 1. Ensure Unique Client ID for this session (Fixes multi-window issue)
@@ -22,7 +32,8 @@ const App: React.FC = () => {
         clientId: sessionClientId,
         username: stored?.username || generateRandomUsername(),
         avatarBase64: stored?.avatarBase64 || null,
-        avatarColor: stored?.avatarColor // Restore color if saved
+        avatarColor: stored?.avatarColor, // Restore color if saved
+        vipCode: savedVipCode // Initialize with stored code
     };
     setCurrentUser(user);
 
@@ -87,7 +98,35 @@ const App: React.FC = () => {
     return () => {
         lobbyClient.disconnect();
     };
+  }, []); // Run once on mount
+
+  // Inject Global VIP Hook
+  useEffect(() => {
+    (window as any).VIPA = () => {
+        setShowVipInput(true);
+        console.log("%c 欢迎，尊贵的 VIP ", "background: #ffd700; color: #000; font-size: 20px; font-weight: bold; padding: 4px; border-radius: 4px;");
+    };
   }, []);
+
+  // Update currentUser when vipCode changes
+  useEffect(() => {
+      if (currentUser && savedVipCode !== currentUser.vipCode) {
+          setCurrentUser(prev => prev ? ({ ...prev, vipCode: savedVipCode }) : null);
+      }
+  }, [savedVipCode]);
+
+  const handleVipSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      const code = vipInputVal.trim();
+      if (code === '995231030' || code === 'xiaozuotvt') {
+          setSavedVipCode(code);
+          localStorage.setItem(VIP_STORAGE_KEY, code);
+          alert("VIP 身份已激活。特效将在特定场景触发。");
+          setShowVipInput(false);
+      } else {
+          alert("无效的口令");
+      }
+  };
 
   const handleJoin = (user: UserProfile, room: RoomInfo) => {
     // Save only username/avatar/color preferences, not the session clientID
@@ -96,7 +135,9 @@ const App: React.FC = () => {
         avatarBase64: user.avatarBase64,
         avatarColor: user.avatarColor
     });
-    setCurrentUser(user);
+    // Ensure the latest VIP code is attached
+    const finalUser = { ...user, vipCode: savedVipCode };
+    setCurrentUser(finalUser);
     setCurrentRoom(room);
   };
 
@@ -106,16 +147,50 @@ const App: React.FC = () => {
     window.history.pushState({}, '', window.location.pathname);
   };
 
-  if (currentRoom && currentUser) {
-    return <ChatRoom user={currentUser} room={currentRoom} onLeave={handleLeave} />;
-  }
-
   return (
-    <Lobby 
-        initialUser={currentUser} 
-        onJoin={handleJoin} 
-        publicRooms={publicRooms}
-    />
+    <>
+        {currentRoom && currentUser ? (
+            <ChatRoom user={currentUser} room={currentRoom} onLeave={handleLeave} />
+        ) : (
+            <Lobby 
+                initialUser={currentUser} 
+                onJoin={handleJoin} 
+                publicRooms={publicRooms}
+            />
+        )}
+
+        {/* VIP Modal */}
+        {showVipInput && (
+            <div className="modal-overlay animate-fade-in" onClick={() => setShowVipInput(false)}>
+                <div className="modal-content" onClick={e => e.stopPropagation()} style={{ padding: '24px' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                        <Crown size={48} color="#ffd700" style={{ marginBottom: '16px' }} />
+                        <h2 style={{ margin: 0, color: '#ffd700' }}>欢迎，尊贵的 VIP</h2>
+                        <p style={{ color: 'var(--text-muted)', marginTop: '8px' }}>请输入专属口令激活特权</p>
+                    </div>
+                    <form onSubmit={handleVipSubmit}>
+                        <input 
+                            type="password"
+                            value={vipInputVal}
+                            onChange={e => setVipInputVal(e.target.value)}
+                            placeholder="在此输入口令..."
+                            className="styled-input"
+                            autoFocus
+                            style={{ textAlign: 'center', letterSpacing: '4px', fontSize: '18px' }}
+                        />
+                        <div className="flex gap-4" style={{ marginTop: '20px' }}>
+                            <button type="button" onClick={() => setShowVipInput(false)} className="btn-primary" style={{ flex: 1, backgroundColor: 'var(--bg-hover)', color: 'var(--text-primary)' }}>
+                                <X size={20} /> 取消
+                            </button>
+                            <button type="submit" className="btn-primary" style={{ flex: 1, backgroundColor: '#ffd700', color: 'black' }}>
+                                <Check size={20} /> 激活
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        )}
+    </>
   );
 };
 

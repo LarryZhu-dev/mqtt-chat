@@ -4,6 +4,7 @@ export interface UserProfile {
   username: string;
   avatarBase64: string | null;
   avatarColor?: string; // Hex color for random avatars
+  vipCode?: string; // Added for VIP effects
 }
 
 // Internal type for tracking activity

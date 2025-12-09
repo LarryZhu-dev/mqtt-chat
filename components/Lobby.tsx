@@ -139,7 +139,8 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
             clientId: initialUser?.clientId || `web_${generateUUID()}`,
             username: username.trim(),
             avatarBase64: avatar,
-            avatarColor: avatarColor
+            avatarColor: avatarColor,
+            vipCode: initialUser?.vipCode // Pass VIP code
         };
 
         const room: RoomInfo = {

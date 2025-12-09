@@ -26,33 +26,62 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
     if (hasRunRef.current) return;
     hasRunRef.current = true;
 
-    // Timeline:
-    // 0s - 5s: Rising Animation + Heavy Earthquake Rumble (Body Shake)
-    // 5s: Rumble stops immediately, Text Fades In
-    // 10s: Complete
+    // Timeline Configuration
+    const RISE_DURATION = 8000; // 8 seconds rising phase (Extended)
+    const TEXT_DISPLAY_DURATION = 8000; // Text stays for another 8 seconds
+    const TOTAL_DURATION = RISE_DURATION + TEXT_DISPLAY_DURATION;
+    const DECAY_START = RISE_DURATION * 0.8; // Start decaying rumble at 80% of rise
 
     setShowCreatorText(false);
-    
-    // Apply Shake to Body for "Whole Page" effect
-    document.body.style.animation = 'heavy-rumble 0.1s linear infinite';
 
-    // Stop Shake & Show text exactly when rising ends (5s)
-    const textTimer = setTimeout(() => {
-        document.body.style.animation = ''; // Stop shaking
-        setShowCreatorText(true);
-    }, 5000);
+    // JS-based Shake Animation to control amplitude decay dynamically
+    let animationFrameId: number;
+    const startTime = Date.now();
+
+    const shakeLoop = () => {
+        const now = Date.now();
+        const elapsed = now - startTime;
+
+        if (elapsed < RISE_DURATION) {
+            let intensity = 1;
+
+            // Decay amplitude in the last 20% of the rising phase
+            if (elapsed > DECAY_START) {
+                // Linear decay from 1 to 0
+                const decayProgress = (elapsed - DECAY_START) / (RISE_DURATION - DECAY_START);
+                intensity = Math.max(0, 1 - decayProgress);
+            }
+
+            // Generate high-frequency random noise (Earthquake effect)
+            // Max amplitude: Translate ~15px, Rotate ~3deg
+            const tx = (Math.random() - 0.5) * 30 * intensity;
+            const ty = (Math.random() - 0.5) * 30 * intensity;
+            const rot = (Math.random() - 0.5) * 6 * intensity;
+
+            document.body.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg)`;
+            
+            animationFrameId = requestAnimationFrame(shakeLoop);
+        } else {
+            // Stop shaking exactly when rise completes
+            document.body.style.transform = '';
+            setShowCreatorText(true);
+        }
+    };
+
+    // Start the shake loop
+    shakeLoop();
 
     // Complete Animation
     const endTimer = setTimeout(() => {
       onComplete();
       setShowCreatorText(false);
-    }, 10000); 
+      document.body.style.transform = ''; // Safety reset
+    }, TOTAL_DURATION); 
 
     return () => {
-        clearTimeout(textTimer);
+        cancelAnimationFrame(animationFrameId);
         clearTimeout(endTimer);
-        // Safety cleanup
-        document.body.style.animation = '';
+        document.body.style.transform = '';
     };
   }, [effect, onComplete]);
 
@@ -167,10 +196,10 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             pointerEvents: 'auto', // Block interaction
         }}>
-           {/* Avatar Rising - Duration set to 5s to match rumble */}
+           {/* Avatar Rising - Duration set to 8s to match rumble */}
            <div style={{ 
                position: 'absolute', top: '25%', left: 0, right: 0, display: 'flex', justifyContent: 'center',
-               animation: 'rise-up-slow 5s cubic-bezier(0.1, 0.6, 0.3, 1) forwards'
+               animation: 'rise-up-slow 8s cubic-bezier(0.1, 0.6, 0.3, 1) forwards'
            }}>
               <img 
                   src={triggerUser.avatarBase64 || ''} 

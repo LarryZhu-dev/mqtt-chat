@@ -93,40 +93,18 @@ body {
 }
 
 /* VIP Animations */
-/* Violent Shake for Creator Effect */
-@keyframes shake-violent {
+/* Heavy Rumble - High frequency chaotic shake for earthquake feel */
+@keyframes heavy-rumble {
   0% { transform: translate(0, 0) rotate(0deg); }
-  2% { transform: translate(-25px, -25px) rotate(-5deg); }
-  4% { transform: translate(25px, 25px) rotate(5deg); }
-  6% { transform: translate(-25px, 25px) rotate(-5deg); }
-  8% { transform: translate(25px, -25px) rotate(5deg); }
-  10% { transform: translate(-25px, 0px) rotate(-5deg); }
-  12% { transform: translate(25px, 0px) rotate(5deg); }
-  14% { transform: translate(0px, -25px) rotate(-5deg); }
-  16% { transform: translate(0px, 25px) rotate(5deg); }
-  18% { transform: translate(-25px, -25px) rotate(-5deg); }
-  20% { transform: translate(25px, 25px) rotate(5deg); }
-  22% { transform: translate(-20px, 20px) rotate(-4deg); }
-  24% { transform: translate(20px, -20px) rotate(4deg); }
-  26% { transform: translate(-20px, -20px) rotate(-4deg); }
-  28% { transform: translate(20px, 20px) rotate(4deg); }
-  30% { transform: translate(-20px, 0px) rotate(-4deg); }
-  32% { transform: translate(20px, 0px) rotate(4deg); }
-  34% { transform: translate(0px, -20px) rotate(-4deg); }
-  36% { transform: translate(0px, 20px) rotate(4deg); }
-  38% { transform: translate(-20px, 20px) rotate(-4deg); }
-  40% { transform: translate(20px, -20px) rotate(4deg); }
-  45% { transform: translate(-15px, -15px) rotate(-3deg); }
-  50% { transform: translate(15px, 15px) rotate(3deg); }
-  55% { transform: translate(-15px, 15px) rotate(-3deg); }
-  60% { transform: translate(15px, -15px) rotate(3deg); }
-  65% { transform: translate(-10px, -10px) rotate(-2deg); }
-  70% { transform: translate(10px, 10px) rotate(2deg); }
-  75% { transform: translate(-10px, 10px) rotate(-2deg); }
-  80% { transform: translate(10px, -10px) rotate(2deg); }
-  85% { transform: translate(-5px, -5px) rotate(-1deg); }
-  90% { transform: translate(5px, 5px) rotate(1deg); }
-  95% { transform: translate(-2px, 2px) rotate(0deg); }
+  10% { transform: translate(-10px, -15px) rotate(-2deg); }
+  20% { transform: translate(15px, 5px) rotate(2deg); }
+  30% { transform: translate(-15px, 15px) rotate(-3deg); }
+  40% { transform: translate(15px, -10px) rotate(3deg); }
+  50% { transform: translate(-5px, 10px) rotate(-1deg); }
+  60% { transform: translate(10px, -15px) rotate(2deg); }
+  70% { transform: translate(-20px, -5px) rotate(-3deg); }
+  80% { transform: translate(15px, 10px) rotate(3deg); }
+  90% { transform: translate(-5px, 5px) rotate(1deg); }
   100% { transform: translate(0, 0) rotate(0deg); }
 }
 

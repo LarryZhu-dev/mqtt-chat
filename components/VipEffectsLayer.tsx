@@ -27,8 +27,8 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
     hasRunRef.current = true;
 
     // Timeline:
-    // 0s - 12s: Rising Animation + Violent Shake
-    // 12s: Shake stops, Text Fades In
+    // 0s - 12s: Rising Animation + Heavy Earthquake Rumble
+    // 12s: Rumble stops, Text Fades In
     // 17s: Complete
 
     setShowCreatorText(false);
@@ -160,7 +160,8 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
             backgroundColor: 'rgba(0,0,0,0.85)', 
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             pointerEvents: 'auto', // Block interaction
-            animation: 'shake-violent 12s linear forwards' // Shake the whole world
+            // Use the new heavy-rumble animation, loops rapidly (0.1s) until text shows
+            animation: showCreatorText ? 'none' : 'heavy-rumble 0.1s linear infinite' 
         }}>
            {/* Avatar Rising - Rise duration extended to 12s with cubic-bezier for slow stop */}
            <div style={{ 

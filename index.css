@@ -45,12 +45,6 @@ body {
   overflow-x: hidden; /* Prevent horizontal scroll from animations */
 }
 
-/* Global Body Shake Class */
-body.shake-body {
-  animation: shake-hard 0.1s infinite;
-  overflow: hidden; /* Prevent scrollbars appearing during shake */
-}
-
 ::selection {
   background-color: rgba(138, 180, 248, 0.3);
   color: #fff;
@@ -113,7 +107,46 @@ body.shake-body {
   100% { transform: translate(0px, 0px) rotate(0deg); }
 }
 
+/* Custom Decaying Shake for Creator Effect */
+@keyframes shake-decay {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  
+  /* High Intensity (0-40%) - Violent shaking */
+  5% { transform: translate(-12px, -12px) rotate(-5deg); }
+  10% { transform: translate(12px, 12px) rotate(5deg); }
+  15% { transform: translate(-10px, 10px) rotate(-4deg); }
+  20% { transform: translate(10px, -10px) rotate(4deg); }
+  25% { transform: translate(-14px, -6px) rotate(-6deg); }
+  30% { transform: translate(14px, 6px) rotate(6deg); }
+  35% { transform: translate(-8px, 14px) rotate(-3deg); }
+  40% { transform: translate(8px, -14px) rotate(3deg); }
+
+  /* Medium Intensity (40-70%) - Noticeable decay */
+  45% { transform: translate(-6px, -6px) rotate(-2deg); }
+  50% { transform: translate(6px, 6px) rotate(2deg); }
+  55% { transform: translate(-4px, 4px) rotate(-1deg); }
+  60% { transform: translate(4px, -4px) rotate(1deg); }
+  65% { transform: translate(-2px, -2px) rotate(-0.5deg); }
+  70% { transform: translate(2px, 2px) rotate(0.5deg); }
+
+  /* Low Intensity to Stop (70-85%) - Subtly settling */
+  75% { transform: translate(-1px, 1px) rotate(0deg); }
+  80% { transform: translate(1px, -1px) rotate(0deg); }
+  
+  /* Stopped (85-100%) - Completely still for smooth arrival */
+  85% { transform: translate(0, 0) rotate(0deg); }
+  90% { transform: translate(0, 0) rotate(0deg); }
+  95% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
 @keyframes rise-up {
+  0% { transform: translateY(110vh) scale(0.5); opacity: 1; }
+  100% { transform: translateY(0) scale(1.5); opacity: 1; }
+}
+
+/* Slower, smoother rise for Creator Effect */
+@keyframes rise-up-slow {
   0% { transform: translateY(110vh) scale(0.5); opacity: 1; }
   100% { transform: translateY(0) scale(1.5); opacity: 1; }
 }

@@ -17,8 +17,6 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
   useEffect(() => {
     if (!effect) {
       hasRunRef.current = false;
-      // Safety cleanup
-      document.body.classList.remove('shake-body');
     }
   }, [effect]);
 
@@ -28,26 +26,26 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
     if (hasRunRef.current) return;
     hasRunRef.current = true;
 
-    // Start Shake
-    document.body.classList.add('shake-body');
+    // Timeline:
+    // 0s - 12s: Rising Animation (Slow end) + Shake Decay (Stops at 80% mark)
+    // 12s: Text Fades In
+    // 17s: Complete
+
     setShowCreatorText(false);
 
-    // Stop Shake & Show Text exactly at 8s (Rise completion)
-    const shakeTimer = setTimeout(() => {
-        document.body.classList.remove('shake-body');
+    // Show text after the rise is complete (12s)
+    const textTimer = setTimeout(() => {
         setShowCreatorText(true);
-    }, 8000);
+    }, 12000);
 
     // Complete Animation
-    // 8s (Rise) + 4.5s (Sequence) -> ~12.5s -> 13s buffer
     const endTimer = setTimeout(() => {
       onComplete();
       setShowCreatorText(false);
-    }, 13000); 
+    }, 17000); 
 
     return () => {
-        document.body.classList.remove('shake-body');
-        clearTimeout(shakeTimer);
+        clearTimeout(textTimer);
         clearTimeout(endTimer);
     };
   }, [effect, onComplete]);
@@ -160,20 +158,28 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             pointerEvents: 'auto' // Block interaction
         }}>
-           {/* Avatar Rising - Stops at 8s */}
-           <div style={{ position: 'absolute', top: '20%', left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
-              <img 
-                src={triggerUser.avatarBase64 || ''} 
-                alt="Creator"
-                style={{ 
-                    width: '300px', height: '300px', borderRadius: '50%', 
-                    boxShadow: '0 0 100px rgba(255,255,255,0.5)',
-                    animation: 'rise-up 8s cubic-bezier(0.22, 1, 0.36, 1) forwards'
-                }} 
-              />
+           {/* Avatar Rising - Rise duration extended to 12s with cubic-bezier for slow stop */}
+           <div style={{ 
+               position: 'absolute', top: '20%', left: 0, right: 0, display: 'flex', justifyContent: 'center',
+               animation: 'rise-up-slow 12s cubic-bezier(0.1, 0.6, 0.3, 1) forwards'
+           }}>
+              {/* Inner Wrapper for Shaking - Decays to 0 before the rise finishes */}
+              <div style={{
+                  animation: 'shake-decay 12s linear forwards'
+              }}>
+                <img 
+                    src={triggerUser.avatarBase64 || ''} 
+                    alt="Creator"
+                    style={{ 
+                        width: '300px', height: '300px', borderRadius: '50%', 
+                        boxShadow: '0 0 100px rgba(255,255,255,0.5)',
+                        display: 'block'
+                    }} 
+                />
+              </div>
            </div>
            
-           {/* Text Container (Shows after shake ends) */}
+           {/* Text Container (Shows after rise ends) */}
            {showCreatorText && (
                <div style={{ 
                    textAlign: 'center', color: 'white', marginTop: '40vh',
@@ -184,7 +190,7 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
                        fontSize: '2rem', color: '#8ab4f8', marginBottom: '20px', fontWeight: 'bold',
                        opacity: 0,
                        animation: 'fadeIn 1s ease-out forwards',
-                       animationDelay: '0s' // Starts immediately when container shows (8s mark)
+                       animationDelay: '0s'
                    }}>
                        {triggerUser.username}
                    </div>

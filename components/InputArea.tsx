@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Image as ImageIcon, Smile, X } from 'lucide-react';
 import { compressImage } from '../utils/helpers';
@@ -16,6 +17,10 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
   const [showEmoji, setShowEmoji] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Refs for click-outside detection
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (replyingTo) {
@@ -37,6 +42,26 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
       }
     }
   }, [insertText]);
+
+  // Handle click outside to close emoji picker
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target as Node) &&
+        !emojiButtonRef.current?.contains(event.target as Node)
+      ) {
+        setShowEmoji(false);
+      }
+    };
+
+    if (showEmoji) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showEmoji]);
 
   const handleSend = () => {
     if (!text.trim() && !pendingImage) return;
@@ -119,7 +144,11 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
 
         {/* Emoji Picker Popover */}
         {showEmoji && (
-          <div className="animate-fade-in" style={{ position: 'absolute', bottom: '70px', left: '0', zIndex: 40 }}>
+          <div 
+             ref={emojiPickerRef}
+             className="animate-fade-in" 
+             style={{ position: 'absolute', bottom: '70px', left: '0', zIndex: 40 }}
+          >
             <EmojiPicker 
                 onSelect={(emoji) => { setText(prev => prev + emoji); textAreaRef.current?.focus(); }}
                 onClose={() => setShowEmoji(false)}
@@ -129,6 +158,7 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
 
         <div className="flex gap-2 items-end">
           <button 
+              ref={emojiButtonRef}
               onClick={() => setShowEmoji(!showEmoji)} 
               className="btn-icon"
               title="表情"

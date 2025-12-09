@@ -1,11 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+
+import React, { useEffect, useRef, useState, UIEvent } from 'react';
 import { ChatMessage, PresencePayload, Reaction, RoomInfo, UserProfile, RoomConfig, VotePayload, OnlineUser } from '../types';
 import { MqttService } from '../services/mqttService';
 import { generateUUID } from '../utils/helpers';
 import { InputArea } from './InputArea';
 import { MessageBubble } from './MessageBubble';
 import { ImageLightbox } from './ImageLightbox';
-import { LogOut, Trash2, Users, Settings, Lock, Globe, Check, X, ShieldAlert, Wifi, WifiOff, Clock, Copy, Reply, Download } from 'lucide-react';
+import { LogOut, Trash2, Users, Settings, Lock, Globe, Check, X, ShieldAlert, Wifi, WifiOff, Clock, Copy, Reply, Download, ArrowDown } from 'lucide-react';
 
 interface ChatRoomProps {
   user: UserProfile;
@@ -24,6 +25,7 @@ interface ActiveVoteState {
 const HEARTBEAT_INTERVAL = 10000;
 const PRUNE_TIMEOUT = 25000;
 const VOTE_TIMEOUT = 60000;
+const SCROLL_THRESHOLD = 150; // Pixels from bottom to consider "near bottom"
 
 export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onLeave }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -47,6 +49,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
   const [insertTextRequest, setInsertTextRequest] = useState<{ text: string; id: number } | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [hasUnreadMention, setHasUnreadMention] = useState(false);
+  
+  // Scrolling State
+  const [isNearBottom, setIsNearBottom] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const mqttRef = useRef<MqttService | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -62,6 +68,26 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
   useEffect(() => { activeVoteRef.current = activeVote; }, [activeVote]);
   useEffect(() => { onlineUsersRef.current = onlineUsers; }, [onlineUsers]);
   useEffect(() => { roomConfigRef.current = roomConfig; }, [roomConfig]);
+
+  // Handle Scroll Logic
+  const handleScroll = (e: UIEvent<HTMLDivElement>) => {
+      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+      const dist = scrollHeight - scrollTop - clientHeight;
+      const near = dist < SCROLL_THRESHOLD;
+      
+      setIsNearBottom(near);
+      
+      // If user manually scrolls to bottom, clear unread count
+      if (near) {
+          setUnreadCount(0);
+      }
+  };
+
+  const scrollToBottom = (smooth = true) => {
+    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+    setUnreadCount(0);
+    setIsNearBottom(true);
+  };
 
   // Title Flashing Logic
   useEffect(() => {
@@ -126,7 +152,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
             }
         }
         
-        setTimeout(scrollToBottom, 100);
+        // Smart Scroll Handling
+        // We use a functional update in useEffect below to check fresh state, 
+        // but here we can't easily access the freshest isNearBottom without ref or effect.
+        // We will handle the side-effects in a separate useEffect on [messages].
       },
       onPresence: (payload) => {
         setOnlineUsers(prev => {
@@ -193,6 +222,25 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       if (mqttRef.current) mqttRef.current.disconnect();
     };
   }, []);
+
+  // Smart Auto-Scroll Effect
+  useEffect(() => {
+      if (messages.length === 0) return;
+      const lastMsg = messages[messages.length - 1];
+
+      // If I sent the message, always scroll
+      if (lastMsg.senderId === user.clientId) {
+          scrollToBottom();
+          return;
+      }
+
+      if (isNearBottom) {
+          setTimeout(scrollToBottom, 100);
+      } else {
+          setUnreadCount(prev => prev + 1);
+      }
+  }, [messages]);
+
 
   useEffect(() => {
       const interval = setInterval(() => {
@@ -365,6 +413,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       imageUrl: imageBase64, 
       senderId: user.clientId,
       senderUsername: user.username,
+      senderAvatar: user.avatarBase64, // Current protocol sends full base64 for avatar
       timestamp: Date.now(),
       replyToId: replyingTo?.id,
       replyToSummary: replySummary,
@@ -378,16 +427,13 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
         setMessages(prev => [...prev, newMsg]);
     }
     setReplyingTo(null);
+    scrollToBottom();
   };
 
   const sendReaction = (msgId: string, emoji: string) => {
       if (!mqttRef.current) return;
       const reaction: Reaction = { emoji, fromClientId: user.clientId, fromUsername: user.username, timestamp: Date.now() };
       mqttRef.current.sendReaction(initialRoom.id, msgId, reaction);
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
   
   const scrollToMessage = (id: string) => {
@@ -750,7 +796,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       {/* Messages Area */}
       <div 
         className="message-area custom-scrollbar" 
-        ref={containerRef} 
+        ref={containerRef}
+        onScroll={handleScroll} 
         onContextMenu={handleGlobalContextMenu}
       >
         <div style={{ flex: 1 }} />
@@ -779,6 +826,34 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
           />
         ))}
         <div ref={messagesEndRef} />
+
+        {/* Floating Scroll to Bottom Button */}
+        {!isNearBottom && (
+            <div style={{ position: 'sticky', bottom: '10px', display: 'flex', justifyContent: 'center', width: '100%', pointerEvents: 'none', zIndex: 10 }}>
+                <button 
+                    onClick={() => scrollToBottom(true)}
+                    className="animate-bounce-in"
+                    style={{ 
+                        pointerEvents: 'auto',
+                        backgroundColor: 'var(--accent)', 
+                        color: '#202124',
+                        border: 'none', 
+                        borderRadius: '24px',
+                        padding: '8px 16px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        fontSize: '13px'
+                    }}
+                >
+                    <ArrowDown size={16} />
+                    {unreadCount > 0 ? `${unreadCount} 条新消息` : '回到底部'}
+                </button>
+            </div>
+        )}
       </div>
 
       {/* Input */}

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ChatMessage, Reaction, UserProfile } from '../types';
 import clsx from 'clsx';
@@ -34,6 +35,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   // Sender resolution
   const avatarSrc = senderProfile?.avatarBase64 || message.senderAvatar;
   const username = senderProfile?.username || message.senderUsername;
+  const usernameColor = senderProfile?.avatarColor; // Get color if available
   
   // Check if mentioned (simple string match for now)
   const isMentioned = !isMe && (
@@ -81,7 +83,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         <div className="message-container">
             
             {!isMe && (
-                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', marginLeft: '4px', opacity: 0.8 }}>
+                <span style={{ 
+                    fontSize: '11px', 
+                    color: usernameColor || 'var(--text-secondary)', // Use avatar color if available 
+                    marginBottom: '4px', 
+                    marginLeft: '4px', 
+                    opacity: 0.9,
+                    fontWeight: usernameColor ? 'bold' : 'normal'
+                }}>
                     {username}
                 </span>
             )}

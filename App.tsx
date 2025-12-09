@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Lobby } from './components/Lobby';
 import { ChatRoom } from './components/ChatRoom';
 import { UserProfile, RoomInfo, PublicRoomPayload } from './types';
-import { getStoredUser, saveUser, generateUUID, generateShortId } from './utils/helpers';
+import { getStoredUser, saveUser, generateUUID, generateShortId, generateRandomUsername } from './utils/helpers';
 import { MqttService } from './services/mqttService';
 
 const App: React.FC = () => {
@@ -20,8 +20,9 @@ const App: React.FC = () => {
     // Merge stored profile with new ClientID
     const user: UserProfile = {
         clientId: sessionClientId,
-        username: stored?.username || `User_${generateShortId(4)}`,
-        avatarBase64: stored?.avatarBase64 || null
+        username: stored?.username || generateRandomUsername(),
+        avatarBase64: stored?.avatarBase64 || null,
+        avatarColor: stored?.avatarColor // Restore color if saved
     };
     setCurrentUser(user);
 
@@ -89,8 +90,12 @@ const App: React.FC = () => {
   }, []);
 
   const handleJoin = (user: UserProfile, room: RoomInfo) => {
-    // Save only username/avatar preferences, not the session clientID
-    saveUser({ username: user.username, avatarBase64: user.avatarBase64 });
+    // Save only username/avatar/color preferences, not the session clientID
+    saveUser({ 
+        username: user.username, 
+        avatarBase64: user.avatarBase64,
+        avatarColor: user.avatarColor
+    });
     setCurrentUser(user);
     setCurrentRoom(room);
   };

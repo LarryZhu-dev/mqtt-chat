@@ -3,6 +3,7 @@ export interface UserProfile {
   clientId: string;
   username: string;
   avatarBase64: string | null;
+  avatarColor?: string; // Hex color for random avatars
 }
 
 // Internal type for tracking activity

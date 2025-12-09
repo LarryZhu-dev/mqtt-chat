@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, useRef } from 'react';
 import { UserProfile, RoomInfo } from '../types';
-import { generateUUID, compressImage, generateShortId } from '../utils/helpers';
-import { Users, Lock, Globe, LogIn, Upload, ShieldAlert, Info, Hash } from 'lucide-react';
+import { generateUUID, compressImage, generateShortId, generateRandomUsername, generateRandomAvatar } from '../utils/helpers';
+import { Users, Lock, Globe, LogIn, Upload, ShieldAlert, Info, Hash, RefreshCw, Shuffle, Edit2 } from 'lucide-react';
 import clsx from 'clsx';
 
 interface LobbyProps {
@@ -14,6 +15,7 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
   // User State
   const [username, setUsername] = useState(initialUser?.username || '');
   const [avatar, setAvatar] = useState<string | null>(initialUser?.avatarBase64 || null);
+  const [avatarColor, setAvatarColor] = useState<string | undefined>(initialUser?.avatarColor);
   
   // Room State
   const [roomIdInput, setRoomIdInput] = useState('');
@@ -21,34 +23,92 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
   const [isPublic, setIsPublic] = useState(false);
   const [error, setError] = useState('');
 
-  // Animation State
+  // UI State
   const [isJoining, setIsJoining] = useState(false);
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const [isClosingAvatarMenu, setIsClosingAvatarMenu] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const avatarContainerRef = useRef<HTMLDivElement>(null);
 
   // Generate random room on mount if empty
   useEffect(() => {
-     if(!roomIdInput) setRoomIdInput(generateShortId(6));
+     if(!roomIdInput) handleRefreshRoomId();
+     if(!username) handleRefreshUsername();
+     
+     // Generate initial random avatar if none exists
+     if (!initialUser?.avatarBase64) {
+         handleRandomAvatar();
+     }
   }, []);
 
   // Sync state when initialUser loads from localStorage
   useEffect(() => {
     if (initialUser) {
-      setUsername(prev => prev ? prev : (initialUser.username || ''));
-      setAvatar(prev => prev ? prev : (initialUser.avatarBase64 || null));
-      
-      if (initialUser.username && initialUser.username.startsWith('User_') === false) {
-          setUsername(initialUser.username);
-      }
-      if (initialUser.avatarBase64) {
-          setAvatar(initialUser.avatarBase64);
-      }
+      if (initialUser.username && !username) setUsername(initialUser.username);
+      if (initialUser.avatarBase64) setAvatar(initialUser.avatarBase64);
+      if (initialUser.avatarColor) setAvatarColor(initialUser.avatarColor);
     }
   }, [initialUser]);
+
+  // Handle click outside to close avatar menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (avatarContainerRef.current && !avatarContainerRef.current.contains(event.target as Node)) {
+        if (showAvatarMenu) handleCloseAvatarMenu();
+      }
+    };
+
+    if (showAvatarMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showAvatarMenu]);
+
+  const handleRefreshUsername = () => {
+      setUsername(generateRandomUsername());
+  };
+
+  const handleRefreshRoomId = () => {
+      setRoomIdInput(generateShortId(6));
+  };
+
+  const handleRandomAvatar = () => {
+      const { base64, color } = generateRandomAvatar();
+      setAvatar(base64);
+      setAvatarColor(color);
+      handleCloseAvatarMenu();
+  };
+
+  const handleUploadClick = () => {
+      fileInputRef.current?.click();
+      handleCloseAvatarMenu();
+  };
+
+  const handleToggleAvatarMenu = () => {
+      if (showAvatarMenu) {
+          handleCloseAvatarMenu();
+      } else {
+          setShowAvatarMenu(true);
+      }
+  };
+
+  const handleCloseAvatarMenu = () => {
+      setIsClosingAvatarMenu(true);
+      setTimeout(() => {
+          setShowAvatarMenu(false);
+          setIsClosingAvatarMenu(false);
+      }, 300); // Wait for exit animation
+  };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       try {
         const base64 = await compressImage(e.target.files[0], 100, 0.6);
         setAvatar(base64);
+        setAvatarColor(undefined); // Clear pastel color for custom uploads
       } catch (err) {
         setError("图片处理失败");
       }
@@ -78,7 +138,8 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
         const user: UserProfile = {
             clientId: initialUser?.clientId || `web_${generateUUID()}`,
             username: username.trim(),
-            avatarBase64: avatar
+            avatarBase64: avatar,
+            avatarColor: avatarColor
         };
 
         const room: RoomInfo = {
@@ -117,8 +178,50 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
                   您的身份
               </label>
               <div className="flex items-center gap-4">
-                <div style={{ position: 'relative', width: '70px', height: '70px' }}>
-                  <div className="avatar" style={{ width: '100%', height: '100%', border: '2px solid var(--bg-input)' }}>
+                {/* Avatar Area with Popups */}
+                <div ref={avatarContainerRef} style={{ position: 'relative', width: '70px', height: '70px' }}>
+                  
+                  {/* Floating Action Buttons */}
+                  {(showAvatarMenu || isClosingAvatarMenu) && (
+                      <>
+                        <button 
+                            type="button"
+                            onClick={handleRandomAvatar}
+                            className={clsx("btn-icon", isClosingAvatarMenu ? "animate-bubble-down" : "animate-bubble-up")}
+                            style={{ 
+                                position: 'absolute', top: '-40px', left: '-10px', 
+                                backgroundColor: 'var(--bg-surface)', border: '1px solid var(--accent)', 
+                                width: '36px', height: '36px', zIndex: 20,
+                                animationDelay: isClosingAvatarMenu ? '0.1s' : '0s'
+                            }}
+                            title="随机生成"
+                        >
+                            <Shuffle size={16} color="var(--accent)" />
+                        </button>
+                        <button 
+                            type="button"
+                            onClick={handleUploadClick}
+                            className={clsx("btn-icon", isClosingAvatarMenu ? "animate-bubble-down" : "animate-bubble-up")}
+                            style={{ 
+                                position: 'absolute', top: '-40px', right: '-10px', 
+                                backgroundColor: 'var(--bg-surface)', border: '1px solid var(--text-muted)', 
+                                width: '36px', height: '36px', zIndex: 20, 
+                                animationDelay: isClosingAvatarMenu ? '0s' : '0.1s'
+                            }}
+                            title="上传图片"
+                        >
+                            <Upload size={16} />
+                        </button>
+                      </>
+                  )}
+
+                  <div 
+                    className="avatar" 
+                    style={{ 
+                        width: '100%', height: '100%', border: '2px solid var(--bg-input)', cursor: 'pointer', position: 'relative' 
+                    }}
+                    onClick={handleToggleAvatarMenu}
+                  >
                     {avatar ? (
                       <img src={avatar} alt="Avatar" />
                     ) : (
@@ -126,30 +229,41 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
                         <Users size={28} />
                       </div>
                     )}
-                  </div>
-                  <label 
-                    style={{ 
-                        position: 'absolute', inset: 0, 
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                        backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: '50%', 
-                        cursor: 'pointer', opacity: 0, transition: 'opacity 0.2s'
+                    
+                    {/* Hover Overlay */}
+                    <div className="avatar-hover-overlay" style={{
+                         position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)',
+                         display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s'
                     }}
-                    onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-                    onMouseLeave={e => e.currentTarget.style.opacity = '0'}
-                  >
-                    <Upload size={20} color="white" />
-                    <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} />
-                  </label>
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                        onMouseLeave={(e) => {
+                             e.currentTarget.style.opacity = '0';
+                        }}
+                    >
+                         <Edit2 size={20} color="white" />
+                    </div>
+                  </div>
+                  <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} />
                 </div>
                 
-                <div className="flex-1">
+                <div className="flex-1 relative">
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="给自己起个昵称..."
                     className="styled-input"
+                    style={{ paddingRight: '40px' }}
                   />
+                  <button 
+                    type="button"
+                    onClick={handleRefreshUsername}
+                    className="btn-icon"
+                    style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)' }}
+                    title="随机昵称"
+                  >
+                      <RefreshCw size={16} />
+                  </button>
                 </div>
               </div>
             </div>
@@ -169,9 +283,18 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
                         onChange={(e) => setRoomIdInput(e.target.value)}
                         placeholder="房间 ID"
                         className="styled-input"
-                        style={{ paddingLeft: '40px', fontFamily: 'monospace' }}
+                        style={{ paddingLeft: '40px', paddingRight: '40px', fontFamily: 'monospace' }}
                         maxLength={16}
                     />
+                     <button 
+                        type="button"
+                        onClick={handleRefreshRoomId}
+                        className="btn-icon"
+                        style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)' }}
+                        title="随机房间号"
+                    >
+                        <RefreshCw size={16} />
+                    </button>
                  </div>
                  <div className="relative">
                     <div style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }}><Info size={18}/></div>

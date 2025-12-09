@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const EMOJI_CATEGORIES = {
   "Smileys": ["😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "🙃", "😉", "😊", "😇", "🥰", "😍", "🤩", "😘", "😗", "😚", "😙", "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "🤥", "😌", "😔", "😪", "🤤", "😴", "😷", "🤒", "🤕", "🤢", "🤮", "🤧", "🥵", "🥶", "🥴", "😵", "🤯", "🤠", "🥳", "😎", "🤓", "🧐", "😕", "😟", "🙁", "☹️", "😮", "😯", "😲", "😳", "🥺", "😦", "😧", "😨", "😰", "😥", "😢", "😭", "😱", "😖", "😣", "😞", "😓", "😩", "😫", "🥱", "😤", "😡", "😠", "🤬", "😈", "👿", "💀", "☠️", "💩", "🤡", "👹", "👺", "👻", "👽", "👾", "🤖"],
@@ -15,20 +17,52 @@ interface EmojiPickerProps {
 
 export const EmojiPicker: React.FC<EmojiPickerProps> = ({ onSelect, onClose }) => {
   const [activeCategory, setActiveCategory] = useState<keyof typeof EMOJI_CATEGORIES>("Smileys");
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+      if (categoryScrollRef.current) {
+          const amount = 100;
+          categoryScrollRef.current.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
+      }
+  };
 
   return (
     <div className="emoji-picker-container" style={{ width: '320px', height: '300px' }}>
-      {/* Categories */}
-      <div className="scrollbar-hide" style={{ display: 'flex', overflowX: 'auto', padding: '6px', backgroundColor: 'var(--bg-input)', gap: '4px' }}>
-        {Object.keys(EMOJI_CATEGORIES).map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat as any)}
-            className={`emoji-category-btn ${activeCategory === cat ? "active" : ""}`}
-          >
-            {cat}
-          </button>
-        ))}
+      {/* Categories with Scroll Buttons */}
+      <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'var(--bg-input)', padding: '2px' }}>
+         <button 
+            type="button" 
+            onClick={() => scrollCategories('left')}
+            className="btn-icon"
+            style={{ padding: '4px', width: '24px', height: '24px' }}
+         >
+             <ChevronLeft size={14} />
+         </button>
+         
+         <div 
+            ref={categoryScrollRef}
+            className="scrollbar-hide" 
+            style={{ display: 'flex', overflowX: 'auto', gap: '4px', flex: 1, padding: '6px 4px' }}
+         >
+            {Object.keys(EMOJI_CATEGORIES).map((cat) => (
+            <button
+                key={cat}
+                onClick={() => setActiveCategory(cat as any)}
+                className={`emoji-category-btn ${activeCategory === cat ? "active" : ""}`}
+            >
+                {cat}
+            </button>
+            ))}
+         </div>
+
+         <button 
+            type="button" 
+            onClick={() => scrollCategories('right')}
+            className="btn-icon"
+            style={{ padding: '4px', width: '24px', height: '24px' }}
+         >
+             <ChevronRight size={14} />
+         </button>
       </div>
 
       {/* Grid */}

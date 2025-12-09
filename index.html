@@ -2,63 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>wcnm-chat</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23282828%22/><path d=%22M50 20 L80 35 V60 C80 75 50 90 50 90 C50 90 20 75 20 60 V35 L50 20 Z%22 fill=%22%238ab4f8%22/><text x=%2250%22 y=%2265%22 font-family=%22sans-serif%22 font-size=%2235%22 fill=%22%231f2020%22 text-anchor=%22middle%22 font-weight=%22bold%22>W</text></svg>" />
     
-    <!-- 1. Suppress Tailwind Production Warning & Apply Custom Theme for CDN mode -->
-    <script>
-      // This config mirrors tailwind.config.js to ensure CDN rendering matches the build
-      window.tailwind = {
-        config: {
-          theme: {
-            extend: {
-              colors: {
-                chrome: {
-                  900: '#1f2020', // Main Background
-                  800: '#282828', // Surface/Cards/Sidebar
-                  700: '#3b3b3b', // Inputs/Hover states (Explicitly #3b3b3b as requested)
-                  600: '#3c3c3c', // Secondary Background
-                  500: '#5f6368', // Disabled/Placeholder
-                  300: '#c7c7c7', // Icons / Secondary Text
-                  100: '#e8eaed', // Primary Text (High contrast)
-                },
-                accent: {
-                  DEFAULT: '#8ab4f8', // Button Background
-                  hover: '#a8c7fa',   // Lighter blue for hover
-                  text: '#a8c7fa',    // Action Text
-                }
-              },
-              animation: {
-                'fade-in': 'fadeIn 0.4s ease-out',
-                'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                'bounce-in': 'bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55)',
-              },
-              keyframes: {
-                fadeIn: {
-                  '0%': { opacity: '0' },
-                  '100%': { opacity: '1' },
-                },
-                slideUp: {
-                  '0%': { transform: 'translateY(20px)', opacity: '0' },
-                  '100%': { transform: 'translateY(0)', opacity: '1' },
-                },
-                bounceIn: {
-                  '0%': { transform: 'scale(0.3)', opacity: '0' },
-                  '50%': { transform: 'scale(1.05)' },
-                  '70%': { transform: 'scale(0.9)' },
-                  '100%': { transform: 'scale(1)', opacity: '1' },
-                }
-              }
-            }
-          }
-        }
-      }
-    </script>
-    
-    <!-- 2. Tailwind CSS CDN (Fallback/Dev Compatibility) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
     <script type="importmap">
     {
       "imports": {

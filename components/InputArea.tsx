@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Send, Image as ImageIcon, Smile, X } from 'lucide-react';
 import { compressImage } from '../utils/helpers';
@@ -64,37 +63,41 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
   };
 
   return (
-    <div className="bg-chrome-800 px-4 py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.2)] z-30">
-      <div className="max-w-5xl mx-auto flex flex-col gap-2 relative">
+    <div className="input-area-wrapper">
+      <div className="input-area-content">
         
         {/* Reply Context */}
         {replyingTo && (
-          <div className="flex items-center justify-between bg-chrome-600 px-4 py-2 rounded-xl mb-1 text-sm border-l-4 border-accent shadow-sm animate-slide-up">
-            <div className="truncate text-chrome-300">
-              回复 <span className="font-bold text-accent-text">{replyingTo.username}</span>: {replyingTo.content.substring(0, 50)}...
+          <div className="animate-slide-up" style={{ 
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+              backgroundColor: 'var(--bg-input)', padding: '8px 16px', borderRadius: '12px', 
+              fontSize: '13px', borderLeft: '3px solid var(--accent)' 
+          }}>
+            <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-secondary)' }}>
+              回复 <span style={{ fontWeight: 'bold', color: 'var(--accent-text)' }}>{replyingTo.username}</span>: {replyingTo.content.substring(0, 50)}...
             </div>
-            <button onClick={onCancelReply} className="text-chrome-300 hover:text-white p-1 hover:bg-chrome-700 rounded-full transition">
-              <X size={16} />
+            <button onClick={onCancelReply} className="btn-icon" style={{ padding: '4px' }}>
+              <X size={14} />
             </button>
           </div>
         )}
 
         {/* Pending Image Preview */}
         {pendingImage && (
-            <div className="relative inline-block w-fit mb-2 group animate-bounce-in">
-                <img src={pendingImage} alt="Preview" className="h-40 rounded-xl bg-black/20 object-contain shadow-lg" />
+            <div className="image-preview-wrapper animate-bounce-in">
+                <img src={pendingImage} alt="Preview" className="image-preview-img" />
                 <button 
                   onClick={() => setPendingImage(null)}
-                  className="absolute -top-2 -right-2 bg-chrome-700 hover:bg-red-600 text-white rounded-full p-1.5 shadow-md transition"
+                  className="image-preview-close"
                 >
-                    <X size={14} />
+                    <X size={12} />
                 </button>
             </div>
         )}
 
         {/* Emoji Picker Popover */}
         {showEmoji && (
-          <div className="animate-fade-in">
+          <div className="animate-fade-in" style={{ position: 'absolute', bottom: '70px', left: '0', zIndex: 40 }}>
             <EmojiPicker 
                 onSelect={(emoji) => { setText(prev => prev + emoji); textAreaRef.current?.focus(); }}
                 onClose={() => setShowEmoji(false)}
@@ -102,19 +105,21 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
           </div>
         )}
 
-        <div className="flex items-end gap-3">
+        <div className="flex gap-2 items-end">
           <button 
               onClick={() => setShowEmoji(!showEmoji)} 
-              className="p-3 text-chrome-300 hover:text-accent transition rounded-full hover:bg-chrome-700 mb-0.5"
+              className="btn-icon"
               title="表情"
+              style={{ padding: '10px' }}
           >
             <Smile size={24} />
           </button>
 
           <button 
               onClick={() => fileInputRef.current?.click()} 
-              className="p-3 text-chrome-300 hover:text-accent transition rounded-full hover:bg-chrome-700 mb-0.5"
+              className="btn-icon"
               title="图片"
+              style={{ padding: '10px' }}
           >
             <ImageIcon size={24} />
           </button>
@@ -126,10 +131,7 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
               onChange={handleImageUpload} 
           />
 
-          <div 
-            className="flex-1 rounded-[24px] px-4 py-2 transition-all flex items-center shadow-inner"
-            style={{ backgroundColor: '#3b3b3b' }} 
-          >
+          <div className="chat-textarea-container">
             <textarea
               ref={textAreaRef}
               value={text}
@@ -137,16 +139,23 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
               placeholder="发送消息..."
-              className="w-full bg-transparent text-chrome-100 placeholder-chrome-500 focus:outline-none resize-none h-[24px] max-h-[120px] overflow-y-auto leading-6 custom-scrollbar"
+              className="chat-textarea custom-scrollbar"
               rows={1}
-              style={{ minHeight: '24px' }}
             />
           </div>
 
           <button 
               onClick={handleSend}
               disabled={!text.trim() && !pendingImage}
-              className="p-3 bg-accent hover:bg-accent-hover text-chrome-900 rounded-full transition disabled:opacity-30 disabled:cursor-not-allowed mb-0.5 shadow-md transform active:scale-95"
+              className="btn-icon"
+              style={{ 
+                  backgroundColor: (!text.trim() && !pendingImage) ? 'transparent' : 'var(--accent)', 
+                  color: (!text.trim() && !pendingImage) ? 'var(--text-muted)' : '#202124', 
+                  borderRadius: '50%', 
+                  padding: '10px',
+                  transition: 'all 0.2s',
+                  cursor: (!text.trim() && !pendingImage) ? 'default' : 'pointer'
+              }}
               title="发送"
           >
             <Send size={20} fill={(!text.trim() && !pendingImage) ? "none" : "currentColor"} />

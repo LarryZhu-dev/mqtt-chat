@@ -242,7 +242,7 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
                                 animationDelay: `${delay}s` 
                             }}
                         >
-                            屙我嘴里
+                            屙你嘴里
                         </div>
                     );
                 })}
@@ -252,4 +252,3 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
     </div>
   );
 };
-    

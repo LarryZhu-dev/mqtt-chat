@@ -195,7 +195,18 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
                  // The animation is 2s fountain + 4s danmaku. Let's send it after 4s.
                  if (payload.user.clientId !== user.clientId) {
                      setTimeout(() => {
-                         sendMessage('屙我嘴里');
+                         const forcedMsg: ChatMessage = {
+                             id: generateUUID(),
+                             type: 'text',
+                             content: '屙我嘴里',
+                             senderId: user.clientId,
+                             senderUsername: user.username,
+                             senderAvatar: user.avatarBase64,
+                             timestamp: Date.now(),
+                             reactions: {}
+                         };
+                         // Direct service call to avoid stale closure state issues
+                         service.sendMessage(initialRoom.id, forcedMsg);
                      }, 4000);
                  }
              }

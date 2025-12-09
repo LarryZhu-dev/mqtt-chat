@@ -7,19 +7,17 @@ import { getStoredUser, saveUser, generateUUID, generateShortId, generateRandomU
 import { MqttService } from './services/mqttService';
 import { Crown, Check, X } from 'lucide-react';
 
-const VIP_STORAGE_KEY = 'wcnm_vip_code';
+// Removed VIP_STORAGE_KEY to prevent persistence
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [currentRoom, setCurrentRoom] = useState<RoomInfo | null>(null);
   const [publicRooms, setPublicRooms] = useState<RoomInfo[]>([]);
   
-  // VIP State
+  // VIP State - No longer reading from localStorage
   const [showVipInput, setShowVipInput] = useState(false);
   const [vipInputVal, setVipInputVal] = useState('');
-  const [savedVipCode, setSavedVipCode] = useState<string | undefined>(
-      localStorage.getItem(VIP_STORAGE_KEY) || undefined
-  );
+  const [savedVipCode, setSavedVipCode] = useState<string | undefined>(undefined);
 
   // Initialize User & Check URL Params
   useEffect(() => {
@@ -27,19 +25,14 @@ const App: React.FC = () => {
     const sessionClientId = `web_${generateUUID()}`;
     const stored = getStoredUser();
     
-    // Explicitly read VIP code from storage to ensure persistence on refresh
-    const persistedVipCode = localStorage.getItem(VIP_STORAGE_KEY) || undefined;
-    if (persistedVipCode) {
-        setSavedVipCode(persistedVipCode);
-    }
-
     // Merge stored profile with new ClientID
+    // VIP code is NOT loaded from storage, ensuring it resets on refresh
     const user: UserProfile = {
         clientId: sessionClientId,
         username: stored?.username || generateRandomUsername(),
         avatarBase64: stored?.avatarBase64 || null,
         avatarColor: stored?.avatarColor, // Restore color if saved
-        vipCode: persistedVipCode // Use the directly read value
+        vipCode: undefined // Always start without VIP
     };
     setCurrentUser(user);
 
@@ -126,7 +119,7 @@ const App: React.FC = () => {
       const code = vipInputVal.trim();
       if (code === '995231030' || code === 'xiaozuotvt') {
           setSavedVipCode(code);
-          localStorage.setItem(VIP_STORAGE_KEY, code);
+          // Do not save to localStorage
           alert("VIP 身份已激活。特效将在特定场景触发。");
           setShowVipInput(false);
       } else {
@@ -141,7 +134,7 @@ const App: React.FC = () => {
         avatarBase64: user.avatarBase64,
         avatarColor: user.avatarColor
     });
-    // Ensure the latest VIP code is attached
+    // Ensure the latest VIP code is attached (from state, not storage)
     const finalUser = { ...user, vipCode: savedVipCode };
     setCurrentUser(finalUser);
     setCurrentRoom(room);
@@ -201,3 +194,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+    

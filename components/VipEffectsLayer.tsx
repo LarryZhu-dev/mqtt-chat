@@ -23,11 +23,6 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
   }, [effect]);
 
   // Effect 1: Creator (995231030)
-  // Logic: 
-  // 1. Dark overlay (immediate)
-  // 2. Full Body Shake (0-8s) - Strictly sync with Rise
-  // 3. Avatar Rise (0-8s)
-  // 4. Text Sequence starts at 8s
   useEffect(() => {
     if (effect !== 'creator') return;
     if (hasRunRef.current) return;
@@ -38,14 +33,13 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
     setShowCreatorText(false);
 
     // Stop Shake & Show Text exactly at 8s (Rise completion)
-    // Using 7950ms to ensure it cuts off just before or exactly at finish to prevent lingering wobble
     const shakeTimer = setTimeout(() => {
         document.body.classList.remove('shake-body');
         setShowCreatorText(true);
     }, 8000);
 
     // Complete Animation
-    // 8s (Rise) + 4s (Text Sequence) + Buffer
+    // 8s (Rise) + 4.5s (Sequence) -> ~12.5s -> 13s buffer
     const endTimer = setTimeout(() => {
       onComplete();
       setShowCreatorText(false);
@@ -60,9 +54,6 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
 
 
   // Effect 2: Fountain (xiaozuotvt)
-  // Logic:
-  // 1. Canvas particle system (0-2s)
-  // 2. Danmaku layer (2s-8s)
   useEffect(() => {
     if (effect !== 'fountain' || !triggerUser) return;
     if (hasRunRef.current) return;
@@ -144,11 +135,11 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
         avatarImg.onload = loop;
     }
 
-    // Danmaku runs for ~6-7s total (delay 2s + duration 4-5s)
-    // Cleanup must occur AFTER everything is off-screen to avoid jitter
+    // Extended timeout to 15s to cover max animation duration (11s) + margin
+    // Prevents jitter/flash at the end
     const timer = setTimeout(() => {
       onComplete();
-    }, 10000); 
+    }, 15000); 
 
     return () => {
         cancelAnimationFrame(animationId);
@@ -169,7 +160,7 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             pointerEvents: 'auto' // Block interaction
         }}>
-           {/* Avatar Rising */}
+           {/* Avatar Rising - Stops at 8s */}
            <div style={{ position: 'absolute', top: '20%', left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
               <img 
                 src={triggerUser.avatarBase64 || ''} 
@@ -177,7 +168,6 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
                 style={{ 
                     width: '300px', height: '300px', borderRadius: '50%', 
                     boxShadow: '0 0 100px rgba(255,255,255,0.5)',
-                    // Duration must match the timeout (8s) exactly
                     animation: 'rise-up 8s cubic-bezier(0.22, 1, 0.36, 1) forwards'
                 }} 
               />
@@ -194,7 +184,7 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
                        fontSize: '2rem', color: '#8ab4f8', marginBottom: '20px', fontWeight: 'bold',
                        opacity: 0,
                        animation: 'fadeIn 1s ease-out forwards',
-                       animationDelay: '0s' // Immediate start
+                       animationDelay: '0s' // Starts immediately when container shows (8s mark)
                    }}>
                        {triggerUser.username}
                    </div>
@@ -204,7 +194,7 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
                        fontSize: '4rem', fontWeight: 'bold', textShadow: '0 0 20px red', margin: 0, letterSpacing: '10px',
                        opacity: 0,
                        animation: 'fadeIn 1s ease-out forwards',
-                       animationDelay: '1s' // 1s delay
+                       animationDelay: '1.2s'
                    }}>
                        造物主降临
                    </h1>
@@ -213,7 +203,7 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
                    <p style={{ 
                        fontSize: '1.5rem', marginTop: '20px', letterSpacing: '5px', opacity: 0,
                        animation: 'fadeIn 1s ease-out forwards',
-                       animationDelay: '2.5s' // 2.5s delay
+                       animationDelay: '2.8s'
                    }}>
                        既见真主，为何不拜
                    </p>
@@ -230,32 +220,36 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
             
             {/* Danmaku Layer - Delayed Start (Starts at 2s) */}
             <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-                {Array.from({ length: 150 }).map((_, i) => (
-                    <div 
-                        key={i}
-                        style={{
-                            position: 'absolute',
-                            // Randomize vertical position 0-100%
-                            top: `${Math.random() * 100}%`,
-                            left: '100%',
-                            fontSize: `${Math.random() * 40 + 20}px`,
-                            color: `hsl(${Math.random() * 360}, 100%, 70%)`,
-                            fontWeight: 'bold',
-                            whiteSpace: 'nowrap',
-                            textShadow: '0 0 5px black',
-                            willChange: 'transform',
-                            // Animation duration variance (4s to 6s)
-                            animation: `danmaku-slide ${4 + Math.random() * 2}s linear forwards`,
-                            // Delay variance (2s to 5s)
-                            animationDelay: `${2 + Math.random() * 3}s` 
-                        }}
-                    >
-                        屙我嘴里
-                    </div>
-                ))}
+                {Array.from({ length: 300 }).map((_, i) => { // Increased to 300
+                    const delay = 2 + Math.random() * 3; // 2s - 5s
+                    const duration = 4 + Math.random() * 5; // 4s - 9s
+                    
+                    return (
+                        <div 
+                            key={i}
+                            style={{
+                                position: 'absolute',
+                                // Spread vertically 5% to 95% to avoid edge clipping
+                                top: `${Math.random() * 90 + 5}%`,
+                                left: '100%',
+                                fontSize: `${Math.random() * 40 + 20}px`,
+                                color: `hsl(${Math.random() * 360}, 100%, 70%)`,
+                                fontWeight: 'bold',
+                                whiteSpace: 'nowrap',
+                                textShadow: '0 0 5px black',
+                                willChange: 'transform',
+                                animation: `danmaku-slide ${duration}s linear forwards`,
+                                animationDelay: `${delay}s` 
+                            }}
+                        >
+                            屙我嘴里
+                        </div>
+                    );
+                })}
             </div>
           </>
       )}
     </div>
   );
 };
+    

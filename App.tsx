@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Lobby } from './components/Lobby';
 import { ChatRoom } from './components/ChatRoom';
 import { UserProfile, RoomInfo, PublicRoomPayload } from './types';
-import { getStoredUser, saveUser, generateUUID, generateShortId, generateRandomUsername } from './utils/helpers';
+import { getStoredUser, saveUser, generateUUID, generateRandomUsername } from './utils/helpers';
 import { MqttService } from './services/mqttService';
 import { Crown, Check, X } from 'lucide-react';
 
@@ -25,20 +24,31 @@ const App: React.FC = () => {
     const sessionClientId = `web_${generateUUID()}`;
     const stored = getStoredUser();
     
+    // Check URL Params for Auto-Join (?room=xyz)
+    const params = new URLSearchParams(window.location.search);
+    const roomParam = params.get('room');
+
+    // Determine username: 
+    // - If stored, use it.
+    // - If not stored AND auto-joining (roomParam), generate random so user has a name.
+    // - If not stored AND NOT auto-joining, leave empty so Lobby can generate one and flag it as 'random' (unsaved).
+    let initUsername = stored?.username || '';
+    if (!initUsername && roomParam) {
+        initUsername = generateRandomUsername();
+    }
+
     // Merge stored profile with new ClientID
     // VIP code is NOT loaded from storage, ensuring it resets on refresh
     const user: UserProfile = {
         clientId: sessionClientId,
-        username: stored?.username || generateRandomUsername(),
+        username: initUsername,
         avatarBase64: stored?.avatarBase64 || null,
         avatarColor: stored?.avatarColor, // Restore color if saved
         vipCode: undefined // Always start without VIP
     };
     setCurrentUser(user);
 
-    // 2. Check URL Params for Auto-Join (?room=xyz)
-    const params = new URLSearchParams(window.location.search);
-    const roomParam = params.get('room');
+    // 2. Process Auto-Join
     if (roomParam) {
         const roomId = roomParam.replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
         if (roomId) {
@@ -127,13 +137,18 @@ const App: React.FC = () => {
       }
   };
 
-  const handleJoin = (user: UserProfile, room: RoomInfo) => {
-    // Save only username/avatar/color preferences, not the session clientID
+  const handleJoin = (user: UserProfile, room: RoomInfo, saveOptions: { saveUsername: boolean; saveAvatar: boolean }) => {
+    // Logic to update stored user preferences
+    // We only update fields that are flagged as 'custom' (saveOptions is true)
+    // If user uses random, we keep the previous stored preference (if any)
+    const stored = getStoredUser() || {};
+    
     saveUser({ 
-        username: user.username, 
-        avatarBase64: user.avatarBase64,
-        avatarColor: user.avatarColor
+        username: saveOptions.saveUsername ? user.username : stored.username, 
+        avatarBase64: saveOptions.saveAvatar ? user.avatarBase64 : stored.avatarBase64,
+        avatarColor: saveOptions.saveAvatar ? user.avatarColor : stored.avatarColor
     });
+
     // Ensure the latest VIP code is attached (from state, not storage)
     const finalUser = { ...user, vipCode: savedVipCode };
     setCurrentUser(finalUser);
@@ -194,4 +209,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-    

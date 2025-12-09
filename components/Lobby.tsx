@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { UserProfile, RoomInfo } from '../types';
 import { generateUUID, compressImage, generateShortId, generateRandomUsername, generateRandomAvatar } from '../utils/helpers';
@@ -7,7 +6,7 @@ import clsx from 'clsx';
 
 interface LobbyProps {
   initialUser: UserProfile | null;
-  onJoin: (user: UserProfile, room: RoomInfo) => void;
+  onJoin: (user: UserProfile, room: RoomInfo, saveOptions: { saveUsername: boolean; saveAvatar: boolean }) => void;
   publicRooms: RoomInfo[];
 }
 
@@ -17,6 +16,12 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
   const [username, setUsername] = useState(initialUser?.username || '');
   const [avatar, setAvatar] = useState<string | null>(initialUser?.avatarBase64 || null);
   const [avatarColor, setAvatarColor] = useState<string | undefined>(initialUser?.avatarColor);
+
+  // Persistence State tracking
+  // If initialUser provided a value, we assume it's a saved custom preference.
+  // If we generate it randomly later, we set these to false.
+  const [isCustomUsername, setIsCustomUsername] = useState(!!initialUser?.username);
+  const [isCustomAvatar, setIsCustomAvatar] = useState(!!initialUser?.avatarBase64);
   
   // Room State
   const [roomIdInput, setRoomIdInput] = useState('');
@@ -35,26 +40,17 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
   // Generate random room on mount if empty
   useEffect(() => {
      if(!roomIdInput) handleRefreshRoomId();
-     if(!username) handleRefreshUsername();
+     
+     // If no username provided (e.g. first time user), generate random
+     if(!username) {
+         handleRefreshUsername();
+     }
      
      // Generate initial random avatar if none exists
      if (!initialUser?.avatarBase64) {
          handleRandomAvatar();
      }
   }, []);
-
-  // Sync state when initialUser loads from localStorage
-  // REMOVED: This effect was causing the avatar to reset when VIP code was entered (parent re-render).
-  // initialUser is loaded synchronously from storage in App.tsx, so useState(initialUser...) covers persistence.
-  /*
-  useEffect(() => {
-    if (initialUser) {
-      if (initialUser.username && !username) setUsername(initialUser.username);
-      if (initialUser.avatarBase64) setAvatar(initialUser.avatarBase64);
-      if (initialUser.avatarColor) setAvatarColor(initialUser.avatarColor);
-    }
-  }, [initialUser]);
-  */
 
   // Handle click outside to close avatar menu
   useEffect(() => {
@@ -74,6 +70,7 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
 
   const handleRefreshUsername = () => {
       setUsername(generateRandomUsername());
+      setIsCustomUsername(false); // Flag as random (do not save)
   };
 
   const handleRefreshRoomId = () => {
@@ -84,6 +81,7 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
       const { base64, color } = generateRandomAvatar();
       setAvatar(base64);
       setAvatarColor(color);
+      setIsCustomAvatar(false); // Flag as random (do not save)
       handleCloseAvatarMenu();
   };
 
@@ -114,6 +112,7 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
         const base64 = await compressImage(e.target.files[0], 100, 0.6);
         setAvatar(base64);
         setAvatarColor(undefined); // Clear pastel color for custom uploads
+        setIsCustomAvatar(true); // Flag as custom (save)
       } catch (err) {
         setError("图片处理失败");
       }
@@ -161,7 +160,7 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
         newUrl.searchParams.set('room', cleanRoomId);
         window.history.pushState({}, '', newUrl);
 
-        onJoin(user, room);
+        onJoin(user, room, { saveUsername: isCustomUsername, saveAvatar: isCustomAvatar });
     }, 400); // Matches animation duration
   };
 
@@ -256,7 +255,10 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
                   <input
                     type="text"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => {
+                        setUsername(e.target.value);
+                        setIsCustomUsername(true); // Flag as custom (save)
+                    }}
                     placeholder="给自己起个昵称..."
                     className="styled-input"
                     style={{ paddingRight: '40px' }}

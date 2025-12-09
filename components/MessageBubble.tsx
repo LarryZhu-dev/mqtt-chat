@@ -24,7 +24,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     onScrollToMessage 
 }) => {
   const [showReactionMenu, setShowReactionMenu] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{x: number, y: number, alignRight: boolean, alignBottom: boolean} | null>(null);
+  const [contextMenu, setContextMenu] = useState<{x: number, y: number} | null>(null);
 
   // Close context menu on click elsewhere
   useEffect(() => {
@@ -36,18 +36,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const handleRightClick = (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation(); 
-      
-      const clickX = e.clientX;
-      const clickY = e.clientY;
-      const screenW = window.innerWidth;
-      const screenH = window.innerHeight;
-
-      setContextMenu({ 
-          x: clickX, 
-          y: clickY,
-          alignRight: clickX > screenW - 150, 
-          alignBottom: clickY > screenH - 200
-      });
+      // Capture accurate coordinates relative to the viewport
+      setContextMenu({ x: e.clientX, y: e.clientY });
   };
 
   // Sender resolution
@@ -57,7 +47,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   return (
     <div 
         id={`msg-${message.id}`}
-        className={`message-row animate-slide-up ${isMe ? "me" : "others"}`}
+        className={`message-row animate-message-in ${isMe ? "me" : "others"}`}
         onMouseLeave={() => setShowReactionMenu(false)}
     >
       <div className="flex gap-2" style={{ maxWidth: '80%' }}>
@@ -174,8 +164,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div 
             className="context-menu animate-fade-in"
             style={{ 
-                top: contextMenu.alignBottom ? contextMenu.y - 120 : contextMenu.y, 
-                left: contextMenu.alignRight ? contextMenu.x - 140 : contextMenu.x  
+                top: contextMenu.y, 
+                left: contextMenu.x,
+                // Intelligent positioning using CSS translate based on viewport quadrant
+                transform: `translate(${contextMenu.x > window.innerWidth / 2 ? '-100%' : '0'}, ${contextMenu.y > window.innerHeight / 2 ? '-100%' : '0'})`
             }}
             onClick={(e) => e.stopPropagation()}
           >

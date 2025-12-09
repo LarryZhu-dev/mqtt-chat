@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { UserProfile, RoomInfo } from '../types';
 import { generateUUID, compressImage, generateShortId } from '../utils/helpers';
 import { Users, Lock, Globe, LogIn, Upload, ShieldAlert, Info, Hash } from 'lucide-react';
@@ -20,6 +20,11 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
   const [topicInput, setTopicInput] = useState('闲聊');
   const [isPublic, setIsPublic] = useState(false);
   const [error, setError] = useState('');
+
+  // Animation State
+  const [isJoining, setIsJoining] = useState(false);
+  const [joinRect, setJoinRect] = useState<{top: number, left: number, width: number, height: number} | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   // Generate random room on mount if empty
   useEffect(() => {
@@ -67,26 +72,56 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
       return;
     }
 
-    const user: UserProfile = {
-      clientId: initialUser?.clientId || `web_${generateUUID()}`,
-      username: username.trim(),
-      avatarBase64: avatar
-    };
+    // Trigger Animation
+    if (btnRef.current) {
+        const rect = btnRef.current.getBoundingClientRect();
+        setJoinRect({
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height
+        });
+        setIsJoining(true);
+        
+        // Wait for animation to finish effectively
+        setTimeout(() => {
+             const user: UserProfile = {
+              clientId: initialUser?.clientId || `web_${generateUUID()}`,
+              username: username.trim(),
+              avatarBase64: avatar
+            };
 
-    const room: RoomInfo = {
-      id: cleanRoomId,
-      topicName: topicInput.trim() || cleanRoomId,
-      isPublic,
-      onlineCount: 0,
-      lastActivity: Date.now()
-    };
+            const room: RoomInfo = {
+              id: cleanRoomId,
+              topicName: topicInput.trim() || cleanRoomId,
+              isPublic,
+              onlineCount: 0,
+              lastActivity: Date.now()
+            };
 
-    onJoin(user, room);
+            onJoin(user, room);
+        }, 600);
+    }
   };
 
   return (
     <div className="lobby-container">
-      <div className="lobby-grid animate-fade-in">
+      {/* Zoom Entry Animation Overlay */}
+      {isJoining && joinRect && (
+          <div 
+             className="zoom-overlay"
+             style={{
+                 top: joinRect.top,
+                 left: joinRect.left,
+                 width: joinRect.width,
+                 height: joinRect.height,
+             }}
+          >
+              <LogIn size={48} color="#202124" />
+          </div>
+      )}
+
+      <div className={`lobby-grid animate-fade-in ${isJoining ? 'opacity-0' : ''}`} style={{ transition: 'opacity 0.2s' }}>
         
         {/* Left: Configuration */}
         <div className="lobby-card">
@@ -172,21 +207,15 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
                  </div>
                </div>
 
-               <div className="toggle-group">
-                  <button 
-                    type="button"
-                    onClick={() => setIsPublic(false)}
-                    className={clsx("toggle-btn", !isPublic && "active")}
-                  >
+               {/* Segmented Control Toggle */}
+               <div className="segmented-control" onClick={() => setIsPublic(!isPublic)}>
+                  <div className="segmented-bg" style={{ transform: isPublic ? 'translateX(100%)' : 'translateX(0)' }} />
+                  <div className={clsx("segmented-option", !isPublic && "active")}>
                     <Lock size={16} /> 私密
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => setIsPublic(true)}
-                    className={clsx("toggle-btn", isPublic && "active")}
-                  >
+                  </div>
+                  <div className={clsx("segmented-option", isPublic && "active")}>
                     <Globe size={16} /> 公开
-                  </button>
+                  </div>
                </div>
             </div>
 
@@ -196,7 +225,13 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
                 </div>
             )}
 
-            <button type="submit" className="btn-primary" style={{ marginTop: '1rem' }}>
+            <button 
+                ref={btnRef}
+                type="submit" 
+                className="btn-primary" 
+                style={{ marginTop: '1rem' }}
+                disabled={isJoining}
+            >
               <LogIn size={20} /> 进入房间
             </button>
           </form>

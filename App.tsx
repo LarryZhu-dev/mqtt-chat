@@ -27,13 +27,19 @@ const App: React.FC = () => {
     const sessionClientId = `web_${generateUUID()}`;
     const stored = getStoredUser();
     
+    // Explicitly read VIP code from storage to ensure persistence on refresh
+    const persistedVipCode = localStorage.getItem(VIP_STORAGE_KEY) || undefined;
+    if (persistedVipCode) {
+        setSavedVipCode(persistedVipCode);
+    }
+
     // Merge stored profile with new ClientID
     const user: UserProfile = {
         clientId: sessionClientId,
         username: stored?.username || generateRandomUsername(),
         avatarBase64: stored?.avatarBase64 || null,
         avatarColor: stored?.avatarColor, // Restore color if saved
-        vipCode: savedVipCode // Initialize with stored code
+        vipCode: persistedVipCode // Use the directly read value
     };
     setCurrentUser(user);
 
@@ -108,7 +114,7 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Update currentUser when vipCode changes
+  // Update currentUser when vipCode changes (e.g. active entry)
   useEffect(() => {
       if (currentUser && savedVipCode !== currentUser.vipCode) {
           setCurrentUser(prev => prev ? ({ ...prev, vipCode: savedVipCode }) : null);

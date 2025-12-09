@@ -228,6 +228,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
 
   const handleCopyLink = () => {
       const url = new URL(window.location.href);
+      // Use set to prevent duplicate parameters
       url.searchParams.set('room', initialRoom.id);
       
       navigator.clipboard.writeText(url.toString()).then(() => {
@@ -496,10 +497,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
           <div 
             className="context-menu animate-fade-in"
             style={{ 
-                top: msgContextMenu.y, 
-                left: msgContextMenu.x,
+                top: msgContextMenu.y + 2, 
+                left: msgContextMenu.x + 2,
                 // Intelligent positioning using CSS translate based on viewport quadrant
-                transform: `translate(${msgContextMenu.x > window.innerWidth / 2 ? '-100%' : '0'}, ${msgContextMenu.y > window.innerHeight / 2 ? '-100%' : '0'})`
+                transform: `translate(${msgContextMenu.x > window.innerWidth * 0.5 ? '-100%' : '0'}, ${msgContextMenu.y > window.innerHeight * 0.5 ? '-100%' : '0'})`
             }}
             onClick={(e) => e.stopPropagation()}
           >

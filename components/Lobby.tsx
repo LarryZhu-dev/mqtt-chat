@@ -75,7 +75,7 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
 
     // Delay join to allow animations to play
     setTimeout(() => {
-            const user: UserProfile = {
+        const user: UserProfile = {
             clientId: initialUser?.clientId || `web_${generateUUID()}`,
             username: username.trim(),
             avatarBase64: avatar
@@ -88,6 +88,11 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
             onlineCount: 0,
             lastActivity: Date.now()
         };
+
+        // Update URL state without reloading
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('room', cleanRoomId);
+        window.history.pushState({}, '', newUrl);
 
         onJoin(user, room);
     }, 400); // Matches animation duration

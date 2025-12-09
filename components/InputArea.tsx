@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Send, Image as ImageIcon, Smile, X } from 'lucide-react';
 import { compressImage } from '../utils/helpers';
 import { EmojiPicker } from './EmojiPicker';
@@ -15,6 +15,12 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
   const [showEmoji, setShowEmoji] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (replyingTo) {
+      textAreaRef.current?.focus();
+    }
+  }, [replyingTo?.id]);
 
   const handleSend = () => {
     if (!text.trim() && !pendingImage) return;

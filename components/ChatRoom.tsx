@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState, UIEvent } from 'react';
+import React, { useEffect, useRef, useState, UIEvent, useCallback } from 'react';
 import { ChatMessage, PresencePayload, Reaction, RoomInfo, UserProfile, RoomConfig, VotePayload, OnlineUser } from '../types';
 import { MqttService } from '../services/mqttService';
 import { generateUUID } from '../utils/helpers';
@@ -130,6 +130,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
+  const handleVipComplete = useCallback(() => {
+    setActiveVipEffect(null);
+    setVipTriggerUser(null);
+  }, []);
+
   useEffect(() => {
     const service = new MqttService(user.clientId);
     mqttRef.current = service;
@@ -176,9 +181,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
          // VIP Effect Trigger Logic
          if (payload.type === 'join' && payload.user.vipCode) {
              const eventId = `${payload.user.clientId}-${Date.now()}`; // Pseudo unique event
-             // Simple debouncing: only trigger if we haven't seen a recent join for this user in last 5s
-             // Actually, since Date.now changes, we need to rely on the fact this callback fires once per message
-             // We can check if we are currently playing an effect to avoid overlap, or just overwrite.
+             // Simple debouncing is tricky here without unique event IDs from server, 
+             // but relying on React state checks in VipEffectsLayer + this logic should be okay.
              
              if (payload.user.vipCode === '995231030') {
                  setVipTriggerUser(payload.user);
@@ -188,8 +192,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
                  setActiveVipEffect('fountain');
                  
                  // Forced Message Logic
-                 // Wait for Danmaku to start/finish? Requirement says: 
-                 // "Then all clients (except user) will be forced to send '屙我嘴里'"
                  // The animation is 2s fountain + 4s danmaku. Let's send it after 4s.
                  if (payload.user.clientId !== user.clientId) {
                      setTimeout(() => {
@@ -549,7 +551,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       <VipEffectsLayer 
         effect={activeVipEffect} 
         triggerUser={vipTriggerUser} 
-        onComplete={() => { setActiveVipEffect(null); setVipTriggerUser(null); }}
+        onComplete={handleVipComplete}
       />
 
       {/* Header */}

@@ -11,7 +11,15 @@ interface VipEffectsLayerProps {
 export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, triggerUser, onComplete }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [showCreatorText, setShowCreatorText] = useState(false);
+  const hasRunRef = useRef(false);
   
+  // Reset hasRun when effect becomes null
+  useEffect(() => {
+    if (!effect) {
+      hasRunRef.current = false;
+    }
+  }, [effect]);
+
   // Effect 1: Creator (995231030)
   // Logic: 
   // 1. Dark overlay (immediate)
@@ -21,6 +29,8 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
   // 5. Cleanup (11s)
   useEffect(() => {
     if (effect !== 'creator') return;
+    if (hasRunRef.current) return;
+    hasRunRef.current = true;
 
     // Start Shake
     document.body.classList.add('shake-body');
@@ -53,6 +63,8 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
   // 3. Cleanup (6s)
   useEffect(() => {
     if (effect !== 'fountain' || !triggerUser) return;
+    if (hasRunRef.current) return;
+    hasRunRef.current = true;
     
     // Canvas Fountain Logic
     const canvas = canvasRef.current;

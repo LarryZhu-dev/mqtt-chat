@@ -7,9 +7,10 @@ interface InputAreaProps {
   onSendMessage: (text: string, image?: string) => void;
   replyingTo: { id: string; content: string; username: string } | null;
   onCancelReply: () => void;
+  insertText?: { text: string; id: number } | null;
 }
 
-export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo, onCancelReply }) => {
+export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo, onCancelReply, insertText }) => {
   const [text, setText] = useState('');
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);
@@ -21,6 +22,21 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
       textAreaRef.current?.focus();
     }
   }, [replyingTo?.id]);
+
+  useEffect(() => {
+    if (insertText) {
+      setText(prev => prev + insertText.text);
+      // Focus and move cursor to end
+      if (textAreaRef.current) {
+          textAreaRef.current.focus();
+          // Timeout helps ensure focus happens after state update in some cases
+          setTimeout(() => {
+             const len = textAreaRef.current?.value.length || 0;
+             textAreaRef.current?.setSelectionRange(len, len);
+          }, 0);
+      }
+    }
+  }, [insertText]);
 
   const handleSend = () => {
     if (!text.trim() && !pendingImage) return;

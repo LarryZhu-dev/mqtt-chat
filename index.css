@@ -440,6 +440,13 @@ body {
   border-bottom-left-radius: 4px;
 }
 
+/* Mention Highlight */
+.message-mentioned .bubble {
+  background-color: rgba(253, 216, 53, 0.3) !important; /* Yellow tint */
+  box-shadow: 0 0 0 2px rgba(253, 216, 53, 0.5);
+  border: 1px solid rgba(253, 216, 53, 0.8);
+}
+
 .reply-context {
     font-size: 0.8rem;
     margin-bottom: 6px;
@@ -611,4 +618,28 @@ body {
     cursor: pointer;
     border: none;
     display: flex;
+}
+
+/* Lightbox */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.95);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.lightbox-image {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  transition: transform 0.1s ease-out;
+  cursor: grab;
+}
+.lightbox-image:active {
+    cursor: grabbing;
 }

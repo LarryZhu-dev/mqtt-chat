@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
 import { ChatMessage, Reaction, UserProfile } from '../types';
+import clsx from 'clsx';
 
 interface MessageBubbleProps {
   message: ChatMessage;
   isMe: boolean;
   senderProfile?: UserProfile; // Resolved profile
+  currentUsername: string;
   onReply: (msg: ChatMessage) => void;
   onReact: (msgId: string, emoji: string) => void;
   onDeleteLocal: (msgId: string) => void;
   onScrollToMessage: (id: string) => void;
   onContextMenu: (e: React.MouseEvent, msg: ChatMessage) => void;
+  onMention: (username: string) => void;
+  onViewImage: (url: string) => void;
 }
 
 const REACTION_OPTIONS = ["👍", "❤️", "😂", "😮", "😡", "🎉"];
@@ -18,9 +22,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     message, 
     isMe, 
     senderProfile,
+    currentUsername,
     onReact,
     onScrollToMessage,
-    onContextMenu
+    onContextMenu,
+    onMention,
+    onViewImage
 }) => {
   const [showReactionMenu, setShowReactionMenu] = useState(false);
 
@@ -28,17 +35,35 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const avatarSrc = senderProfile?.avatarBase64 || message.senderAvatar;
   const username = senderProfile?.username || message.senderUsername;
   
+  // Check if mentioned (simple string match for now)
+  const isMentioned = !isMe && (
+      (message.type === 'text' && message.content.includes(`@${currentUsername}`)) ||
+      (message.type === 'mixed' && message.content.includes(`@${currentUsername}`))
+  );
+
   return (
     <div 
         id={`msg-${message.id}`}
-        className={`message-row animate-message-in ${isMe ? "me" : "others"}`}
+        className={clsx(
+            "message-row animate-message-in", 
+            isMe ? "me" : "others",
+            isMentioned && "message-mentioned"
+        )}
         onMouseLeave={() => setShowReactionMenu(false)}
     >
       <div className="flex gap-2" style={{ maxWidth: '80%' }}>
         
         {/* Avatar */}
         {!isMe && (
-            <div className="avatar">
+            <div 
+                className="avatar" 
+                onContextMenu={(e) => {
+                    e.preventDefault();
+                    onMention(username);
+                }}
+                title="右键 @ TA"
+                style={{ cursor: 'context-menu' }}
+            >
             {avatarSrc ? (
                 <img src={avatarSrc} alt="av" />
             ) : (
@@ -82,13 +107,23 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                  {message.type === 'text' && <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{message.content}</p>}
                  {message.type === 'image' && (
                      <div style={{ borderRadius: '8px', overflow: 'hidden', margin: '4px 0' }}>
-                        <img src={message.imageUrl} alt="Content" style={{ maxHeight: '300px', maxWidth: '100%', objectFit: 'contain', cursor: 'pointer', display: 'block' }} onClick={() => window.open(message.imageUrl, '_blank')} />
+                        <img 
+                            src={message.imageUrl} 
+                            alt="Content" 
+                            style={{ maxHeight: '300px', maxWidth: '100%', objectFit: 'contain', cursor: 'pointer', display: 'block' }} 
+                            onClick={(e) => { e.stopPropagation(); onViewImage(message.imageUrl!); }} 
+                        />
                      </div>
                  )}
                  {message.type === 'mixed' && (
                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                          <div style={{ borderRadius: '8px', overflow: 'hidden' }}>
-                            <img src={message.imageUrl} alt="Content" style={{ maxHeight: '300px', maxWidth: '100%', objectFit: 'contain', cursor: 'pointer', display: 'block' }} onClick={() => window.open(message.imageUrl, '_blank')} />
+                            <img 
+                                src={message.imageUrl} 
+                                alt="Content" 
+                                style={{ maxHeight: '300px', maxWidth: '100%', objectFit: 'contain', cursor: 'pointer', display: 'block' }} 
+                                onClick={(e) => { e.stopPropagation(); onViewImage(message.imageUrl!); }} 
+                            />
                          </div>
                          <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{message.content}</p>
                      </div>

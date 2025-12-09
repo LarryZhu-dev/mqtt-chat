@@ -4,6 +4,7 @@ import { MqttService } from '../services/mqttService';
 import { generateUUID } from '../utils/helpers';
 import { InputArea } from './InputArea';
 import { MessageBubble } from './MessageBubble';
+import { ImageLightbox } from './ImageLightbox';
 import { LogOut, Trash2, Users, Settings, Lock, Globe, Check, X, ShieldAlert, Wifi, WifiOff, Clock, Copy, Reply, Download } from 'lucide-react';
 
 interface ChatRoomProps {
@@ -42,9 +43,15 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
   const [activeVote, setActiveVote] = useState<ActiveVoteState | null>(null);
   const [voteTimeLeft, setVoteTimeLeft] = useState(0);
 
+  // New features
+  const [insertTextRequest, setInsertTextRequest] = useState<{ text: string; id: number } | null>(null);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [hasUnreadMention, setHasUnreadMention] = useState(false);
+
   const mqttRef = useRef<MqttService | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const titleIntervalRef = useRef<any>(null);
   
   const activeVoteRef = useRef(activeVote);
   const onlineUsersRef = useRef(onlineUsers);
@@ -55,6 +62,40 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
   useEffect(() => { activeVoteRef.current = activeVote; }, [activeVote]);
   useEffect(() => { onlineUsersRef.current = onlineUsers; }, [onlineUsers]);
   useEffect(() => { roomConfigRef.current = roomConfig; }, [roomConfig]);
+
+  // Title Flashing Logic
+  useEffect(() => {
+    const originalTitle = document.title;
+    
+    if (hasUnreadMention) {
+        if (titleIntervalRef.current) clearInterval(titleIntervalRef.current);
+        let showNotify = true;
+        titleIntervalRef.current = setInterval(() => {
+            document.title = showNotify ? "🔔 有人提到我 - wcnm-chat" : originalTitle;
+            showNotify = !showNotify;
+        }, 1000);
+    } else {
+        if (titleIntervalRef.current) clearInterval(titleIntervalRef.current);
+        titleIntervalRef.current = null;
+        document.title = originalTitle;
+    }
+
+    return () => {
+        if (titleIntervalRef.current) clearInterval(titleIntervalRef.current);
+        document.title = originalTitle;
+    };
+  }, [hasUnreadMention]);
+
+  // Clear notification on visibility change
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+            setHasUnreadMention(false);
+        }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   useEffect(() => {
     const service = new MqttService(user.clientId);
@@ -75,6 +116,16 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
            if (prev.some(m => m.id === msg.id)) return prev;
            return [...prev, msg];
         });
+        
+        // Mention check
+        if (msg.senderId !== user.clientId && document.hidden) {
+            const isMentioned = (msg.type === 'text' || msg.type === 'mixed') && 
+                                msg.content.includes(`@${user.username}`);
+            if (isMentioned) {
+                setHasUnreadMention(true);
+            }
+        }
+        
         setTimeout(scrollToBottom, 100);
       },
       onPresence: (payload) => {
@@ -688,6 +739,14 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
           </div>
       )}
 
+      {/* Lightbox */}
+      {viewingImage && (
+          <ImageLightbox 
+            src={viewingImage} 
+            onClose={() => setViewingImage(null)} 
+          />
+      )}
+
       {/* Messages Area */}
       <div 
         className="message-area custom-scrollbar" 
@@ -709,11 +768,14 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
             message={msg} 
             isMe={msg.senderId === user.clientId}
             senderProfile={onlineUsers.get(msg.senderId)}
+            currentUsername={user.username}
             onReply={setReplyingTo}
             onReact={sendReaction}
             onDeleteLocal={handleDeleteLocal}
             onScrollToMessage={scrollToMessage}
             onContextMenu={handleMessageContextMenu}
+            onMention={(name) => setInsertTextRequest({ text: `@${name} `, id: Date.now() })}
+            onViewImage={setViewingImage}
           />
         ))}
         <div ref={messagesEndRef} />
@@ -728,6 +790,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
             username: replyingTo.senderUsername 
         } : null}
         onCancelReply={() => setReplyingTo(null)}
+        insertText={insertTextRequest}
       />
     </div>
   );

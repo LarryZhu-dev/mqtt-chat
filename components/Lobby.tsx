@@ -30,8 +30,17 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
   // Sync state when initialUser loads from localStorage (Async in App.tsx)
   useEffect(() => {
     if (initialUser) {
-      if (initialUser.username) setUsername(initialUser.username);
-      if (initialUser.avatarBase64) setAvatar(initialUser.avatarBase64);
+      // Only update if state is empty or matches default, prevents overwriting user input if they typed fast
+      setUsername(prev => prev ? prev : (initialUser.username || ''));
+      setAvatar(prev => prev ? prev : (initialUser.avatarBase64 || null));
+      
+      // Force update if it matches the generated pattern (restoring session)
+      if (initialUser.username && initialUser.username.startsWith('User_') === false) {
+          setUsername(initialUser.username);
+      }
+      if (initialUser.avatarBase64) {
+          setAvatar(initialUser.avatarBase64);
+      }
     }
   }, [initialUser]);
 

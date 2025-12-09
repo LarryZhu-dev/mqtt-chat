@@ -5,7 +5,7 @@ import { MqttService } from '../services/mqttService';
 import { generateUUID } from '../utils/helpers';
 import { InputArea } from './InputArea';
 import { MessageBubble } from './MessageBubble';
-import { LogOut, Trash2, Users, Settings, Lock, Globe, Check, X, ShieldAlert, Wifi, WifiOff, Clock, Copy, Link as LinkIcon } from 'lucide-react';
+import { LogOut, Trash2, Users, Settings, Lock, Globe, Check, X, ShieldAlert, Wifi, WifiOff, Clock, Copy } from 'lucide-react';
 
 interface ChatRoomProps {
   user: UserProfile;
@@ -490,22 +490,28 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
              </div>
 
              <div className="min-w-0">
-                 <h2 className="font-bold text-chrome-100 truncate flex items-center gap-2">
+                 <h2 className="font-bold text-chrome-100 truncate flex items-center gap-2 text-lg">
                      {roomConfig?.topicName || initialRoom.topicName}
                      {roomConfig && (
-                         roomConfig.isPublic ? <Globe size={14} className="text-accent" /> : <Lock size={14} className="text-chrome-300" />
+                         roomConfig.isPublic ? <Globe size={16} className="text-accent" /> : <Lock size={16} className="text-chrome-300" />
                      )}
-                 </h2>
-                 <div className="flex items-center gap-2">
-                     <p className="text-xs text-chrome-300 font-mono truncate">ID: {initialRoom.id}</p>
+                     
+                     {/* Copy Link Button - Moved to Header */}
                      <button 
                         onClick={handleCopyLink}
-                        className="text-chrome-300 hover:text-white transition"
+                        className="ml-2 p-1.5 text-chrome-300 hover:text-white hover:bg-chrome-700 rounded-full transition flex items-center gap-1 group relative"
                         title="复制房间链接"
                      >
-                         {isCopied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                         {isCopied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+                         {/* Tooltip confirmation */}
+                         {isCopied && (
+                             <span className="absolute left-full ml-2 text-xs bg-black text-white px-2 py-1 rounded shadow-lg whitespace-nowrap animate-in fade-in zoom-in-50 duration-200">
+                                 复制成功!
+                             </span>
+                         )}
                      </button>
-                 </div>
+                 </h2>
+                 <p className="text-xs text-chrome-300 font-mono truncate">ID: {initialRoom.id}</p>
              </div>
         </div>
         

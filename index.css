@@ -91,10 +91,33 @@ body {
   0% { opacity: 0; transform: translateY(20px) scale(0.95); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-@keyframes zoomEnter {
-  0% { transform: scale(1); border-radius: var(--radius-md); }
-  50% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(50); opacity: 1; border-radius: 0; }
+
+/* Directional Panel Animations */
+@keyframes panelInLeft {
+  from { opacity: 0; transform: translateX(-60px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes panelOutLeft {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-60px); }
+}
+
+@keyframes panelInTopRight {
+  from { opacity: 0; transform: translate(60px, -60px); }
+  to { opacity: 1; transform: translate(0, 0); }
+}
+@keyframes panelOutTopRight {
+  from { opacity: 1; transform: translate(0, 0); }
+  to { opacity: 0; transform: translate(60px, -60px); }
+}
+
+@keyframes panelInBottomRight {
+  from { opacity: 0; transform: translate(60px, 60px); }
+  to { opacity: 1; transform: translate(0, 0); }
+}
+@keyframes panelOutBottomRight {
+  from { opacity: 1; transform: translate(0, 0); }
+  to { opacity: 0; transform: translate(60px, 60px); }
 }
 
 .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
@@ -102,17 +125,15 @@ body {
 .animate-bounce-in { animation: bounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 .animate-message-in { animation: messagePopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 
-.zoom-overlay {
-  position: fixed;
-  z-index: 9999;
-  background-color: var(--accent);
-  animation: zoomEnter 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards;
-  pointer-events: none;
-  transform-origin: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+.animate-panel-left-in { animation: panelInLeft 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.animate-panel-left-out { animation: panelOutLeft 0.4s cubic-bezier(0.4, 0, 1, 1) forwards; }
+
+.animate-panel-tr-in { animation: panelInTopRight 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.animate-panel-tr-out { animation: panelOutTopRight 0.4s cubic-bezier(0.4, 0, 1, 1) forwards; }
+
+.animate-panel-br-in { animation: panelInBottomRight 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.animate-panel-br-out { animation: panelOutBottomRight 0.4s cubic-bezier(0.4, 0, 1, 1) forwards; }
+
 
 /* --- Layout Utilities --- */
 .flex { display: flex; }

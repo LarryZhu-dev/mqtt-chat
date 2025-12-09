@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { UserProfile, RoomInfo } from '../types';
 import { generateUUID, compressImage, generateShortId } from '../utils/helpers';
 import { Users, Lock, Globe, LogIn, Upload, ShieldAlert, Info, Hash } from 'lucide-react';
@@ -23,8 +23,6 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
 
   // Animation State
   const [isJoining, setIsJoining] = useState(false);
-  const [joinRect, setJoinRect] = useState<{top: number, left: number, width: number, height: number} | null>(null);
-  const btnRef = useRef<HTMLButtonElement>(null);
 
   // Generate random room on mount if empty
   useEffect(() => {
@@ -72,59 +70,35 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
       return;
     }
 
-    // Trigger Animation
-    if (btnRef.current) {
-        const rect = btnRef.current.getBoundingClientRect();
-        setJoinRect({
-            top: rect.top,
-            left: rect.left,
-            width: rect.width,
-            height: rect.height
-        });
-        setIsJoining(true);
-        
-        // Wait for animation to finish effectively
-        setTimeout(() => {
-             const user: UserProfile = {
-              clientId: initialUser?.clientId || `web_${generateUUID()}`,
-              username: username.trim(),
-              avatarBase64: avatar
-            };
+    // Trigger Exit Animations
+    setIsJoining(true);
 
-            const room: RoomInfo = {
-              id: cleanRoomId,
-              topicName: topicInput.trim() || cleanRoomId,
-              isPublic,
-              onlineCount: 0,
-              lastActivity: Date.now()
-            };
+    // Delay join to allow animations to play
+    setTimeout(() => {
+            const user: UserProfile = {
+            clientId: initialUser?.clientId || `web_${generateUUID()}`,
+            username: username.trim(),
+            avatarBase64: avatar
+        };
 
-            onJoin(user, room);
-        }, 600);
-    }
+        const room: RoomInfo = {
+            id: cleanRoomId,
+            topicName: topicInput.trim() || cleanRoomId,
+            isPublic,
+            onlineCount: 0,
+            lastActivity: Date.now()
+        };
+
+        onJoin(user, room);
+    }, 400); // Matches animation duration
   };
 
   return (
     <div className="lobby-container">
-      {/* Zoom Entry Animation Overlay */}
-      {isJoining && joinRect && (
-          <div 
-             className="zoom-overlay"
-             style={{
-                 top: joinRect.top,
-                 left: joinRect.left,
-                 width: joinRect.width,
-                 height: joinRect.height,
-             }}
-          >
-              <LogIn size={48} color="#202124" />
-          </div>
-      )}
-
-      <div className={`lobby-grid animate-fade-in ${isJoining ? 'opacity-0' : ''}`} style={{ transition: 'opacity 0.2s' }}>
+      <div className="lobby-grid">
         
-        {/* Left: Configuration */}
-        <div className="lobby-card">
+        {/* Left: Configuration - Animates Left */}
+        <div className={clsx("lobby-card", isJoining ? "animate-panel-left-out" : "animate-panel-left-in")}>
           <div style={{ marginBottom: '2rem' }}>
              <h1 style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0 0 0.5rem 0' }}>wcnm-chat</h1>
              <p style={{ color: 'var(--text-muted)' }}>匿名、轻量、即时的聊天</p>
@@ -226,7 +200,6 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
             )}
 
             <button 
-                ref={btnRef}
                 type="submit" 
                 className="btn-primary" 
                 style={{ marginTop: '1rem' }}
@@ -237,9 +210,11 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
           </form>
         </div>
 
-        {/* Right: Public Lobby List */}
+        {/* Right: Public Lobby List & Alert */}
         <div className="flex flex-col gap-4">
-            <div className="lobby-card flex-1 overflow-hidden">
+            
+            {/* Top Right: Public Rooms - Animates Top-Right */}
+            <div className={clsx("lobby-card flex-1 overflow-hidden", isJoining ? "animate-panel-tr-out" : "animate-panel-tr-in")}>
                 <div className="flex items-center justify-between" style={{ marginBottom: '1.5rem' }}>
                     <h2 className="flex items-center gap-2" style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>
                         <Globe size={24} color="var(--accent)" /> 公开房间
@@ -278,7 +253,8 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
                 </div>
             </div>
 
-            <div className="lobby-card">
+            {/* Bottom Right: Alert - Animates Bottom-Right */}
+            <div className={clsx("lobby-card", isJoining ? "animate-panel-br-out" : "animate-panel-br-in")}>
                 <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', margin: '0 0 8px 0', color: 'var(--text-secondary)' }}>
                     <ShieldAlert size={16} /> 隐私提示
                 </h3>

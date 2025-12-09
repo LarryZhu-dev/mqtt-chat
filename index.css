@@ -1,3 +1,4 @@
+
 /* Global Variables & Reset */
 :root {
   /* Chrome Dark Mode Palette */
@@ -34,6 +35,12 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
+}
+
+/* Ensure HTML background matches body to prevent white flashes during earthquake shake */
+html {
+  background-color: var(--bg-main);
+  overflow: hidden; /* Prevent scrollbar flickering during shake */
 }
 
 body {

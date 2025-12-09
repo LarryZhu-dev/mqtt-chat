@@ -27,26 +27,32 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
     hasRunRef.current = true;
 
     // Timeline:
-    // 0s - 12s: Rising Animation + Heavy Earthquake Rumble
-    // 12s: Rumble stops, Text Fades In
-    // 17s: Complete
+    // 0s - 5s: Rising Animation + Heavy Earthquake Rumble (Body Shake)
+    // 5s: Rumble stops immediately, Text Fades In
+    // 10s: Complete
 
     setShowCreatorText(false);
+    
+    // Apply Shake to Body for "Whole Page" effect
+    document.body.style.animation = 'heavy-rumble 0.1s linear infinite';
 
-    // Show text after the rise is complete (12s)
+    // Stop Shake & Show text exactly when rising ends (5s)
     const textTimer = setTimeout(() => {
+        document.body.style.animation = ''; // Stop shaking
         setShowCreatorText(true);
-    }, 12000);
+    }, 5000);
 
     // Complete Animation
     const endTimer = setTimeout(() => {
       onComplete();
       setShowCreatorText(false);
-    }, 17000); 
+    }, 10000); 
 
     return () => {
         clearTimeout(textTimer);
         clearTimeout(endTimer);
+        // Safety cleanup
+        document.body.style.animation = '';
     };
   }, [effect, onComplete]);
 
@@ -153,20 +159,18 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
       
       {/* EFFECT 1: CREATOR */}
       {effect === 'creator' && triggerUser && (
-        // The Shaking Container. Oversized to prevent edges from showing during shake.
+        // Static Overlay Container (Body is shaking, so this shakes too)
         <div style={{ 
             position: 'absolute', 
-            width: '110vw', height: '110vh', left: '-5vw', top: '-5vh',
+            inset: 0,
             backgroundColor: 'rgba(0,0,0,0.85)', 
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             pointerEvents: 'auto', // Block interaction
-            // Use the new heavy-rumble animation, loops rapidly (0.1s) until text shows
-            animation: showCreatorText ? 'none' : 'heavy-rumble 0.1s linear infinite' 
         }}>
-           {/* Avatar Rising - Rise duration extended to 12s with cubic-bezier for slow stop */}
+           {/* Avatar Rising - Duration set to 5s to match rumble */}
            <div style={{ 
                position: 'absolute', top: '25%', left: 0, right: 0, display: 'flex', justifyContent: 'center',
-               animation: 'rise-up-slow 12s cubic-bezier(0.1, 0.6, 0.3, 1) forwards'
+               animation: 'rise-up-slow 5s cubic-bezier(0.1, 0.6, 0.3, 1) forwards'
            }}>
               <img 
                   src={triggerUser.avatarBase64 || ''} 
@@ -226,7 +230,7 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
             
             {/* Danmaku Layer - Delayed Start (Starts at 2s) */}
             <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-                {Array.from({ length: 300 }).map((_, i) => { // Increased to 300
+                {Array.from({ length: 300 }).map((_, i) => { 
                     const delay = 2 + Math.random() * 3; // 2s - 5s
                     const duration = 4 + Math.random() * 5; // 4s - 9s
                     

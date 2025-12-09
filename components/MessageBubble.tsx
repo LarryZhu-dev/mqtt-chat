@@ -51,7 +51,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         )}
         onMouseLeave={() => setShowReactionMenu(false)}
     >
-      <div className="flex gap-2" style={{ maxWidth: '80%' }}>
+      <div 
+        className={clsx("flex gap-2", isMe ? "justify-end" : "justify-start")} 
+        style={{ maxWidth: '80%' }}
+      >
         
         {/* Avatar */}
         {!isMe && (

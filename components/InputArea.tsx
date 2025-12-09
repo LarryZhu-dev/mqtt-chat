@@ -40,7 +40,7 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
 
   const handleSend = () => {
     if (!text.trim() && !pendingImage) return;
-    onSendMessage(text, pendingImage || undefined);
+    onSendMessage(text.trim(), pendingImage || undefined);
     setText('');
     setPendingImage(null);
     setShowEmoji(false);

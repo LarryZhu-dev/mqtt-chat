@@ -394,7 +394,7 @@ body {
 .message-container {
     display: flex;
     flex-direction: column;
-    max-width: 75%;
+    /* Removed max-width constraint here to allow bubble to fill parent flex container */
 }
 .message-row.me .message-container { align-items: flex-end; }
 .message-row.others .message-container { align-items: flex-start; }
@@ -425,6 +425,7 @@ body {
   font-size: 0.95rem;
   line-height: 1.5;
   word-wrap: break-word;
+  overflow-wrap: anywhere; /* Better handling for long strings */
   position: relative;
   box-shadow: var(--shadow-sm);
   min-width: 40px;

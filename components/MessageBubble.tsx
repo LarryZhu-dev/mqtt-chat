@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ChatMessage, Reaction, UserProfile } from '../types';
-import { Reply, SmilePlus, Trash2, Copy, Download } from 'lucide-react';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -10,6 +9,7 @@ interface MessageBubbleProps {
   onReact: (msgId: string, emoji: string) => void;
   onDeleteLocal: (msgId: string) => void;
   onScrollToMessage: (id: string) => void;
+  onContextMenu: (e: React.MouseEvent, msg: ChatMessage) => void;
 }
 
 const REACTION_OPTIONS = ["👍", "❤️", "😂", "😮", "😡", "🎉"];
@@ -18,27 +18,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     message, 
     isMe, 
     senderProfile,
-    onReply, 
     onReact,
-    onDeleteLocal,
-    onScrollToMessage 
+    onScrollToMessage,
+    onContextMenu
 }) => {
   const [showReactionMenu, setShowReactionMenu] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{x: number, y: number} | null>(null);
-
-  // Close context menu on click elsewhere
-  useEffect(() => {
-      const closeMenu = () => setContextMenu(null);
-      window.addEventListener('click', closeMenu);
-      return () => window.removeEventListener('click', closeMenu);
-  }, []);
-
-  const handleRightClick = (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation(); 
-      // Capture accurate coordinates relative to the viewport
-      setContextMenu({ x: e.clientX, y: e.clientY });
-  };
 
   // Sender resolution
   const avatarSrc = senderProfile?.avatarBase64 || message.senderAvatar;
@@ -76,7 +60,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
             {/* Message Bubble */}
             <div 
-                onContextMenu={handleRightClick}
+                onContextMenu={(e) => onContextMenu(e, message)}
                 className="bubble"
             >
                  {/* Reply Reference */}
@@ -110,7 +94,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                      </div>
                  )}
 
-                 {/* Reaction Menu Popup */}
+                 {/* Reaction Menu Popup (Hover) */}
                  {showReactionMenu && (
                      <div className="animate-bounce-in" style={{ 
                          position: 'absolute', top: '-40px', [isMe ? 'right' : 'left']: 0, zIndex: 20,
@@ -158,53 +142,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             </span>
         </div>
       </div>
-
-      {/* Context Menu */}
-      {contextMenu && (
-          <div 
-            className="context-menu animate-fade-in"
-            style={{ 
-                top: contextMenu.y, 
-                left: contextMenu.x,
-                // Intelligent positioning using CSS translate based on viewport quadrant
-                transform: `translate(${contextMenu.x > window.innerWidth / 2 ? '-100%' : '0'}, ${contextMenu.y > window.innerHeight / 2 ? '-100%' : '0'})`
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-              <button 
-                className="context-menu-item"
-                onClick={() => { onReply(message); setContextMenu(null); }}
-              >
-                  <Reply size={14} /> 引用回复
-              </button>
-              
-              <button 
-                className="context-menu-item"
-                onClick={() => { setShowReactionMenu(true); setContextMenu(null); }}
-              >
-                  <SmilePlus size={14} /> 快速表情
-              </button>
-
-              {message.imageUrl && (
-                  <button 
-                    className="context-menu-item"
-                    onClick={() => { window.open(message.imageUrl, '_blank'); setContextMenu(null); }}
-                  >
-                     <Download size={14} /> 查看原图
-                  </button>
-              )}
-
-              <div style={{ height: '1px', backgroundColor: 'var(--bg-hover)', margin: '4px 8px', opacity: 0.5 }} />
-              
-              <button 
-                className="context-menu-item"
-                style={{ color: '#ef5350' }}
-                onClick={() => { onDeleteLocal(message.id); setContextMenu(null); }}
-              >
-                  <Trash2 size={14} /> 删除 (本地)
-              </button>
-          </div>
-      )}
     </div>
   );
 };

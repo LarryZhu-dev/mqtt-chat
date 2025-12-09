@@ -4,7 +4,7 @@ import { MqttService } from '../services/mqttService';
 import { generateUUID } from '../utils/helpers';
 import { InputArea } from './InputArea';
 import { MessageBubble } from './MessageBubble';
-import { LogOut, Trash2, Users, Settings, Lock, Globe, Check, X, ShieldAlert, Wifi, WifiOff, Clock, Copy } from 'lucide-react';
+import { LogOut, Trash2, Users, Settings, Lock, Globe, Check, X, ShieldAlert, Wifi, WifiOff, Clock, Copy, Reply, Download } from 'lucide-react';
 
 interface ChatRoomProps {
   user: UserProfile;
@@ -32,7 +32,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
   const [showUserList, setShowUserList] = useState(false);
   
   const [isCopied, setIsCopied] = useState(false);
+  
+  // Menus
   const [globalContextMenu, setGlobalContextMenu] = useState<{x: number, y: number} | null>(null);
+  const [msgContextMenu, setMsgContextMenu] = useState<{ x: number; y: number; message: ChatMessage } | null>(null);
 
   const [roomConfig, setRoomConfig] = useState<RoomConfig | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -393,12 +396,21 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       if (e.target === containerRef.current) {
           e.preventDefault();
           setGlobalContextMenu({ x: e.clientX, y: e.clientY });
+          setMsgContextMenu(null);
       }
+  };
+
+  const handleMessageContextMenu = (e: React.MouseEvent, msg: ChatMessage) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setGlobalContextMenu(null);
+      setMsgContextMenu({ x: e.clientX, y: e.clientY, message: msg });
   };
 
   useEffect(() => {
       const handleClick = () => {
           setGlobalContextMenu(null);
+          setMsgContextMenu(null);
           setShowSettings(false);
       };
       window.addEventListener('click', handleClick);
@@ -475,6 +487,71 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
                  className="context-menu-item"
               >
                   <Trash2 size={16} /> 清空屏幕 (F8)
+              </button>
+          </div>
+      )}
+      
+      {/* Message Context Menu */}
+      {msgContextMenu && (
+          <div 
+            className="context-menu animate-fade-in"
+            style={{ 
+                top: msgContextMenu.y, 
+                left: msgContextMenu.x,
+                // Intelligent positioning using CSS translate based on viewport quadrant
+                transform: `translate(${msgContextMenu.x > window.innerWidth / 2 ? '-100%' : '0'}, ${msgContextMenu.y > window.innerHeight / 2 ? '-100%' : '0'})`
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+             {/* Reaction Row */}
+             <div style={{ padding: '8px', display: 'flex', gap: '4px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                 {["👍", "❤️", "😂", "😮", "😡", "🎉"].map(emoji => (
+                     <button 
+                        key={emoji}
+                        onClick={() => { sendReaction(msgContextMenu.message.id, emoji); setMsgContextMenu(null); }}
+                        className="btn-icon"
+                        style={{ fontSize: '18px', padding: '4px', width: '28px', height: '28px' }}
+                     >
+                         {emoji}
+                     </button>
+                 ))}
+             </div>
+
+              <button 
+                className="context-menu-item"
+                onClick={() => { setReplyingTo(msgContextMenu.message); setMsgContextMenu(null); }}
+              >
+                  <Reply size={14} /> 引用回复
+              </button>
+              
+              <button 
+                className="context-menu-item"
+                onClick={() => { 
+                    const text = msgContextMenu.message.content || "";
+                    navigator.clipboard.writeText(text);
+                    setMsgContextMenu(null); 
+                }}
+              >
+                  <Copy size={14} /> 复制内容
+              </button>
+
+              {msgContextMenu.message.imageUrl && (
+                  <button 
+                    className="context-menu-item"
+                    onClick={() => { window.open(msgContextMenu.message.imageUrl, '_blank'); setMsgContextMenu(null); }}
+                  >
+                     <Download size={14} /> 查看原图
+                  </button>
+              )}
+
+              <div style={{ height: '1px', backgroundColor: 'var(--bg-hover)', margin: '4px 8px', opacity: 0.5 }} />
+              
+              <button 
+                className="context-menu-item"
+                style={{ color: '#ef5350' }}
+                onClick={() => { handleDeleteLocal(msgContextMenu.message.id); setMsgContextMenu(null); }}
+              >
+                  <Trash2 size={14} /> 删除 (本地)
               </button>
           </div>
       )}
@@ -635,6 +712,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
             onReact={sendReaction}
             onDeleteLocal={handleDeleteLocal}
             onScrollToMessage={scrollToMessage}
+            onContextMenu={handleMessageContextMenu}
           />
         ))}
         <div ref={messagesEndRef} />

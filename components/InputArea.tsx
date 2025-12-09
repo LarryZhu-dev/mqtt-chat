@@ -64,16 +64,16 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
   };
 
   return (
-    <div className="bg-chrome-800 px-4 py-4 border-t border-chrome-600 shadow-[0_-4px_20px_rgba(0,0,0,0.2)] z-30">
+    <div className="bg-chrome-800 px-4 py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.2)] z-30">
       <div className="max-w-5xl mx-auto flex flex-col gap-2 relative">
         
         {/* Reply Context */}
         {replyingTo && (
-          <div className="flex items-center justify-between bg-chrome-700 px-4 py-2 rounded-xl mb-1 text-sm border-l-4 border-accent shadow-sm animate-slide-up">
+          <div className="flex items-center justify-between bg-chrome-600 px-4 py-2 rounded-xl mb-1 text-sm border-l-4 border-accent shadow-sm animate-slide-up">
             <div className="truncate text-chrome-300">
               回复 <span className="font-bold text-accent-text">{replyingTo.username}</span>: {replyingTo.content.substring(0, 50)}...
             </div>
-            <button onClick={onCancelReply} className="text-chrome-300 hover:text-white p-1 hover:bg-chrome-600 rounded-full transition">
+            <button onClick={onCancelReply} className="text-chrome-300 hover:text-white p-1 hover:bg-chrome-700 rounded-full transition">
               <X size={16} />
             </button>
           </div>
@@ -82,10 +82,10 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
         {/* Pending Image Preview */}
         {pendingImage && (
             <div className="relative inline-block w-fit mb-2 group animate-bounce-in">
-                <img src={pendingImage} alt="Preview" className="h-40 rounded-xl border border-chrome-600 shadow-lg object-contain bg-black/20" />
+                <img src={pendingImage} alt="Preview" className="h-40 rounded-xl bg-black/20 object-contain shadow-lg" />
                 <button 
                   onClick={() => setPendingImage(null)}
-                  className="absolute -top-2 -right-2 bg-chrome-700 hover:bg-red-600 text-white rounded-full p-1.5 shadow-md border border-chrome-600 transition"
+                  className="absolute -top-2 -right-2 bg-chrome-700 hover:bg-red-600 text-white rounded-full p-1.5 shadow-md transition"
                 >
                     <X size={14} />
                 </button>
@@ -126,7 +126,10 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
               onChange={handleImageUpload} 
           />
 
-          <div className="flex-1 bg-chrome-700 rounded-[24px] px-4 py-2 border border-transparent focus-within:border-accent focus-within:bg-chrome-700/80 transition-all flex items-center">
+          <div 
+            className="flex-1 rounded-[24px] px-4 py-2 transition-all flex items-center shadow-inner"
+            style={{ backgroundColor: '#3b3b3b' }} 
+          >
             <textarea
               ref={textAreaRef}
               value={text}

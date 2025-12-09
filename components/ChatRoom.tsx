@@ -446,9 +446,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
   return (
     <div className="flex flex-col h-screen bg-chrome-900 overflow-hidden relative animate-fade-in">
       {/* Header */}
-      <header className="flex-shrink-0 bg-chrome-800/90 backdrop-blur-md border-b border-chrome-600 px-6 py-4 flex items-center justify-between shadow-lg z-20 transition-all">
+      <header className="flex-shrink-0 bg-chrome-800/90 backdrop-blur-md px-6 py-4 flex items-center justify-between shadow-md z-20 transition-all">
         <div className="flex items-center gap-4 overflow-hidden">
-             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-chrome-700">
+             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-chrome-600">
                 {isConnected ? (
                      <Wifi size={16} className="text-green-400" />
                  ) : (
@@ -479,7 +479,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
         <div className="flex items-center gap-3">
              <button 
                 onClick={(e) => { e.stopPropagation(); setShowUserList(true); }}
-                className="hidden sm:flex items-center gap-2 text-chrome-300 text-sm bg-chrome-700 hover:bg-chrome-600 px-3 py-1.5 rounded-full transition-all border border-transparent hover:border-chrome-600"
+                className="hidden sm:flex items-center gap-2 text-chrome-300 text-sm bg-chrome-600 hover:bg-chrome-700 px-3 py-1.5 rounded-full transition-all"
              >
                  <Users size={16} />
                  <span>{onlineUsers.size}</span>
@@ -489,7 +489,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
 
              <button
                 onClick={(e) => { e.stopPropagation(); setShowSettings(!showSettings); }}
-                className="p-2 text-chrome-300 hover:text-accent transition hover:bg-chrome-700/50 rounded-full"
+                className="p-2 text-chrome-300 hover:text-accent transition hover:bg-chrome-700 rounded-full"
                 title="设置"
              >
                  <Settings size={20} />
@@ -510,7 +510,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       {/* Global Context Menu */}
       {globalContextMenu && (
           <div 
-             className="fixed z-50 bg-chrome-800 border border-chrome-600 rounded-lg shadow-2xl py-1 min-w-[140px] animate-fade-in"
+             className="fixed z-50 bg-chrome-800 rounded-lg shadow-2xl py-1 min-w-[140px] animate-fade-in border border-chrome-600"
              style={{ top: globalContextMenu.y, left: globalContextMenu.x }}
           >
               <button 
@@ -526,14 +526,14 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       {showSettings && roomConfig && (
           <div 
             onClick={e => e.stopPropagation()}
-            className="absolute top-20 right-6 z-50 w-80 bg-chrome-800/95 backdrop-blur border border-chrome-600 shadow-2xl rounded-2xl p-5 animate-bounce-in"
+            className="absolute top-20 right-6 z-50 w-80 bg-chrome-800/95 backdrop-blur shadow-2xl rounded-2xl p-5 animate-bounce-in"
           >
               <h3 className="text-chrome-100 font-bold mb-4 flex items-center gap-2 text-lg">
                   <Settings size={20} /> 房间设置
               </h3>
               
               <div className="space-y-5">
-                  <div className="bg-chrome-700/50 p-4 rounded-xl border border-chrome-600/50">
+                  <div className="bg-chrome-600/30 p-4 rounded-xl">
                       <p className="text-xs text-chrome-300 mb-2 uppercase tracking-wide">隐私模式</p>
                       <div className="flex items-center gap-2 text-base font-medium text-chrome-100">
                           {roomConfig.isPublic ? <Globe size={20} className="text-green-400"/> : <Lock size={20} className="text-yellow-400"/>}
@@ -544,7 +544,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
                   {!activeVote ? (
                       <button 
                         onClick={() => startVote(!roomConfig.isPublic)}
-                        className="w-full py-3 bg-chrome-700 hover:bg-accent hover:text-chrome-900 text-chrome-100 text-sm font-medium rounded-xl transition-all border border-chrome-600 hover:border-accent shadow-sm"
+                        className="w-full py-3 bg-chrome-600 hover:bg-accent hover:text-chrome-900 text-chrome-100 text-sm font-medium rounded-xl transition-all shadow-sm"
                       >
                           申请更改为 {roomConfig.isPublic ? '私密' : '公开'}
                       </button>
@@ -554,7 +554,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
                       </div>
                   )}
 
-                  <div className="pt-4 border-t border-chrome-700">
+                  <div className="pt-4 border-t border-chrome-600">
                       <div className="flex justify-between text-[11px] text-chrome-400">
                         <span>房主: {roomConfig.createdBy}</span>
                         <span>{new Date(roomConfig.createdAt).toLocaleDateString()}</span>
@@ -618,15 +618,15 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       {/* 3. User List Modal */}
       {showUserList && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowUserList(false)}>
-              <div className="bg-chrome-800 border border-chrome-600 rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-                  <div className="p-5 border-b border-chrome-700 flex justify-between items-center bg-chrome-800">
+              <div className="bg-chrome-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                  <div className="p-5 border-b border-chrome-600 flex justify-between items-center bg-chrome-800">
                       <h3 className="font-bold text-chrome-100 flex items-center gap-2 text-lg"><Users size={20}/> 在线用户 ({onlineUsers.size})</h3>
                       <button onClick={() => setShowUserList(false)} className="text-chrome-400 hover:text-white transition"><X size={24}/></button>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar bg-chrome-900">
                       {Array.from(onlineUsers.values()).map((u: OnlineUser) => (
-                          <div key={u.clientId} className="flex items-center gap-4 p-3 rounded-xl hover:bg-chrome-800 transition border border-transparent hover:border-chrome-700">
-                              <div className="w-12 h-12 rounded-full bg-chrome-700 overflow-hidden border-2 border-chrome-600">
+                          <div key={u.clientId} className="flex items-center gap-4 p-3 rounded-xl hover:bg-chrome-800 transition">
+                              <div className="w-12 h-12 rounded-full bg-chrome-700 overflow-hidden">
                                   {u.avatarBase64 ? (
                                       <img src={u.avatarBase64} alt={u.username} className="w-full h-full object-cover"/>
                                   ) : (

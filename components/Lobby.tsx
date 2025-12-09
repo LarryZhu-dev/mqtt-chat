@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { UserProfile, RoomInfo } from '../types';
 import { generateUUID, compressImage, generateShortId } from '../utils/helpers';
-import { Users, Lock, Globe, LogIn, Upload, ShieldAlert, Info, Key, Hash } from 'lucide-react';
+import { Users, Lock, Globe, LogIn, Upload, ShieldAlert, Info, Hash } from 'lucide-react';
 import clsx from 'clsx';
 
 interface LobbyProps {
@@ -27,7 +27,7 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
      if(!roomIdInput) setRoomIdInput(generateShortId(6));
   }, []);
 
-  // Sync state when initialUser loads from localStorage (Async in App.tsx)
+  // Sync state when initialUser loads from localStorage
   useEffect(() => {
     if (initialUser) {
       setUsername(prev => prev ? prev : (initialUser.username || ''));
@@ -45,7 +45,7 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       try {
-        const base64 = await compressImage(e.target.files[0], 100, 0.6); // Heavy compression for avatar
+        const base64 = await compressImage(e.target.files[0], 100, 0.6);
         setAvatar(base64);
       } catch (err) {
         setError("图片处理失败");
@@ -90,10 +90,10 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 animate-fade-in">
         
         {/* Left: Configuration */}
-        <div className="bg-chrome-800 p-8 rounded-3xl shadow-xl flex flex-col justify-center transition-all duration-300 hover:shadow-2xl border border-chrome-700/50">
+        <div className="bg-chrome-800 p-8 rounded-3xl shadow-2xl flex flex-col justify-center">
           <div className="mb-8">
-             <h1 className="text-4xl font-bold text-chrome-100 mb-2 tracking-tight">Dark MQTT Chat</h1>
-             <p className="text-chrome-300">安全、轻量、即时的加密通讯体验</p>
+             <h1 className="text-4xl font-bold text-chrome-100 mb-2 tracking-tight">wcnm-chat</h1>
+             <p className="text-chrome-300">匿名、轻量、即时的聊天</p>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-8">
@@ -103,7 +103,7 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
               <label className="block text-xs font-bold text-accent-text uppercase tracking-wider mb-4">您的身份</label>
               <div className="flex items-center gap-5">
                 <div className="relative group">
-                  <div className="w-20 h-20 rounded-full bg-chrome-700 overflow-hidden shadow-inner ring-2 ring-transparent group-hover:ring-accent transition-all duration-300">
+                  <div className="w-20 h-20 rounded-full bg-chrome-600 overflow-hidden shadow-inner ring-2 ring-transparent group-hover:ring-accent transition-all duration-300">
                     {avatar ? (
                       <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
                     ) : (
@@ -124,7 +124,8 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="给自己起个昵称..."
-                    className="w-full bg-chrome-700 text-chrome-100 text-lg px-4 py-3 rounded-xl border-none focus:ring-2 focus:ring-accent focus:bg-chrome-700/80 transition-all placeholder-chrome-600 outline-none"
+                    className="w-full bg-chrome-700 text-chrome-100 text-lg px-4 py-3 rounded-xl border-none focus:ring-2 focus:ring-accent transition-all placeholder-chrome-500 outline-none"
+                    style={{ backgroundColor: '#3b3b3b' }}
                   />
                 </div>
               </div>
@@ -142,7 +143,8 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
                         value={roomIdInput}
                         onChange={(e) => setRoomIdInput(e.target.value)}
                         placeholder="房间 ID"
-                        className="w-full bg-chrome-700 pl-10 pr-4 py-3 rounded-xl text-chrome-100 focus:ring-2 focus:ring-accent outline-none font-mono transition-all"
+                        className="w-full bg-chrome-700 pl-10 pr-4 py-3 rounded-xl text-chrome-100 focus:ring-2 focus:ring-accent outline-none font-mono transition-all placeholder-chrome-500"
+                        style={{ backgroundColor: '#3b3b3b' }}
                         maxLength={16}
                     />
                  </div>
@@ -153,37 +155,42 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
                         value={topicInput}
                         onChange={(e) => setTopicInput(e.target.value)}
                         placeholder="房间话题"
-                        className="w-full bg-chrome-700 pl-10 pr-4 py-3 rounded-xl text-chrome-100 focus:ring-2 focus:ring-accent outline-none transition-all"
+                        className="w-full bg-chrome-700 pl-10 pr-4 py-3 rounded-xl text-chrome-100 focus:ring-2 focus:ring-accent outline-none transition-all placeholder-chrome-500"
+                        style={{ backgroundColor: '#3b3b3b' }}
                     />
                  </div>
                </div>
 
-               <div className="grid grid-cols-2 gap-3 p-1 bg-chrome-700 rounded-xl">
+               <div className="grid grid-cols-2 gap-3 p-1 bg-chrome-700 rounded-xl" style={{ backgroundColor: '#3b3b3b' }}>
                   <button 
                     type="button"
                     onClick={() => setIsPublic(false)}
                     className={clsx(
-                        "py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200", 
-                        !isPublic ? "bg-chrome-800 text-accent shadow-sm" : "text-chrome-300 hover:text-chrome-100"
+                        "py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 border-2", 
+                        !isPublic 
+                            ? "bg-chrome-800 border-accent text-accent shadow-md" 
+                            : "bg-transparent border-transparent text-chrome-300 hover:text-chrome-100"
                     )}
                   >
-                    <Lock size={16} /> 私密房间
+                    <Lock size={16} /> 私密
                   </button>
                   <button 
                     type="button"
                     onClick={() => setIsPublic(true)}
                     className={clsx(
-                        "py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200", 
-                        isPublic ? "bg-chrome-800 text-accent shadow-sm" : "text-chrome-300 hover:text-chrome-100"
+                        "py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 border-2", 
+                        isPublic 
+                            ? "bg-chrome-800 border-accent text-accent shadow-md" 
+                            : "bg-transparent border-transparent text-chrome-300 hover:text-chrome-100"
                     )}
                   >
-                    <Globe size={16} /> 公开大厅
+                    <Globe size={16} /> 公开
                   </button>
                </div>
             </div>
 
             {error && (
-                <div className="flex items-center gap-2 text-red-400 text-sm bg-red-900/10 p-3 rounded-lg border border-red-900/30">
+                <div className="flex items-center gap-2 text-red-400 text-sm bg-red-900/10 p-3 rounded-lg">
                     <ShieldAlert size={16} /> {error}
                 </div>
             )}
@@ -199,12 +206,12 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
 
         {/* Right: Public Lobby List */}
         <div className="flex flex-col gap-4">
-            <div className="bg-chrome-800 p-6 rounded-3xl shadow-xl flex-1 flex flex-col overflow-hidden border border-chrome-700/50">
+            <div className="bg-chrome-800 p-6 rounded-3xl shadow-2xl flex-1 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-chrome-100 flex items-center gap-2">
                     <Globe size={24} className="text-accent" /> 公开房间
                 </h2>
-                <span className="text-xs font-mono text-chrome-300 bg-chrome-700 px-2 py-1 rounded-md">Live</span>
+                <span className="text-xs font-mono text-chrome-300 bg-chrome-600 px-2 py-1 rounded-md">Live</span>
             </div>
             
             <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
@@ -218,7 +225,7 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
                         <div 
                             key={room.id}
                             onClick={() => { setRoomIdInput(room.id); setTopicInput(room.topicName); setIsPublic(true); }}
-                            className="p-4 bg-chrome-700/40 hover:bg-chrome-700 rounded-xl cursor-pointer transition-all border border-transparent hover:border-chrome-600 group animate-slide-up"
+                            className="p-4 bg-chrome-600/30 hover:bg-chrome-600 rounded-xl cursor-pointer transition-all group animate-slide-up"
                             style={{ animationDelay: `${idx * 50}ms` }}
                         >
                             <div className="flex justify-between items-start">
@@ -228,7 +235,7 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
                                         <Hash size={10} /> {room.id}
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-1.5 text-xs text-green-400 bg-green-900/20 px-2.5 py-1 rounded-full border border-green-900/30">
+                                <div className="flex items-center gap-1.5 text-xs text-green-400 bg-green-900/20 px-2.5 py-1 rounded-full">
                                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
                                     {room.onlineCount}
                                 </div>
@@ -239,12 +246,12 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
             </div>
             </div>
 
-            <div className="bg-chrome-800 p-6 rounded-3xl shadow-xl border border-chrome-700/50">
+            <div className="bg-chrome-800 p-6 rounded-3xl shadow-2xl">
                 <h3 className="font-bold text-chrome-100 mb-2 flex items-center gap-2 text-sm">
                     <ShieldAlert size={16} className="text-accent" /> 隐私提示
                 </h3>
                 <p className="text-xs text-chrome-300 leading-relaxed">
-                    本应用基于公共 MQTT Broker，请勿发送敏感个人信息。私密房间 ID 即为密钥，请妥善保管。
+                   本系统不会加密任何消息，任何信息都会经过公开服务器（它可能被任何人查看或截获），只有用户身份为随机生成（即匿名），私密房间id即为密钥，泄露后会导致他人随意进入。公开房间会直接被所有人看到。
                 </p>
             </div>
         </div>

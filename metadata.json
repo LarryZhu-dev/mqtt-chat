@@ -1,5 +1,5 @@
 {
-  "name": "DarkMqttChat",
-  "description": "A secure, feature-rich dark mode chat application powered by EMQX MQTT broker with room management, multimedia support, and reactions.",
+  "name": "wcnm-chat",
+  "description": "匿名、轻量、即时的聊天",
   "requestFramePermissions": []
 }

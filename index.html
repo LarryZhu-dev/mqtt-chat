@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DarkMqttChat</title>
+    <title>wcnm-chat</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23282828%22/><path d=%22M50 20 L80 35 V60 C80 75 50 90 50 90 C50 90 20 75 20 60 V35 L50 20 Z%22 fill=%22%238ab4f8%22/><text x=%2250%22 y=%2265%22 font-family=%22sans-serif%22 font-size=%2235%22 fill=%22%231f2020%22 text-anchor=%22middle%22 font-weight=%22bold%22>W</text></svg>" />
     
     <!-- 1. Suppress Tailwind Production Warning & Apply Custom Theme for CDN mode -->
     <script>
@@ -16,8 +17,8 @@
                 chrome: {
                   900: '#1f2020', // Main Background
                   800: '#282828', // Surface/Cards/Sidebar
-                  700: '#3c3c3c', // Inputs/Hover states
-                  600: '#4a4a4a', // Borders (Synthesized slightly lighter than 700)
+                  700: '#3b3b3b', // Inputs/Hover states (Explicitly #3b3b3b as requested)
+                  600: '#3c3c3c', // Secondary Background
                   500: '#5f6368', // Disabled/Placeholder
                   300: '#c7c7c7', // Icons / Secondary Text
                   100: '#e8eaed', // Primary Text (High contrast)

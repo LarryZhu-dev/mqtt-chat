@@ -13,6 +13,7 @@ interface LobbyProps {
 
 export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }) => {
   // User State
+  // Initialize with initialUser (from localStorage), but do not sync afterwards to avoid overwriting edits
   const [username, setUsername] = useState(initialUser?.username || '');
   const [avatar, setAvatar] = useState<string | null>(initialUser?.avatarBase64 || null);
   const [avatarColor, setAvatarColor] = useState<string | undefined>(initialUser?.avatarColor);
@@ -43,6 +44,9 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
   }, []);
 
   // Sync state when initialUser loads from localStorage
+  // REMOVED: This effect was causing the avatar to reset when VIP code was entered (parent re-render).
+  // initialUser is loaded synchronously from storage in App.tsx, so useState(initialUser...) covers persistence.
+  /*
   useEffect(() => {
     if (initialUser) {
       if (initialUser.username && !username) setUsername(initialUser.username);
@@ -50,6 +54,7 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
       if (initialUser.avatarColor) setAvatarColor(initialUser.avatarColor);
     }
   }, [initialUser]);
+  */
 
   // Handle click outside to close avatar menu
   useEffect(() => {

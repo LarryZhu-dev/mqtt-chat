@@ -27,8 +27,8 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
     hasRunRef.current = true;
 
     // Timeline:
-    // 0s - 12s: Rising Animation (Slow end) + Shake Decay (Stops at 80% mark)
-    // 12s: Text Fades In
+    // 0s - 12s: Rising Animation + Violent Shake
+    // 12s: Shake stops, Text Fades In
     // 17s: Complete
 
     setShowCreatorText(false);
@@ -153,30 +153,29 @@ export const VipEffectsLayer: React.FC<VipEffectsLayerProps> = ({ effect, trigge
       
       {/* EFFECT 1: CREATOR */}
       {effect === 'creator' && triggerUser && (
+        // The Shaking Container. Oversized to prevent edges from showing during shake.
         <div style={{ 
-            position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', 
+            position: 'absolute', 
+            width: '110vw', height: '110vh', left: '-5vw', top: '-5vh',
+            backgroundColor: 'rgba(0,0,0,0.85)', 
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            pointerEvents: 'auto' // Block interaction
+            pointerEvents: 'auto', // Block interaction
+            animation: 'shake-violent 12s linear forwards' // Shake the whole world
         }}>
            {/* Avatar Rising - Rise duration extended to 12s with cubic-bezier for slow stop */}
            <div style={{ 
-               position: 'absolute', top: '20%', left: 0, right: 0, display: 'flex', justifyContent: 'center',
+               position: 'absolute', top: '25%', left: 0, right: 0, display: 'flex', justifyContent: 'center',
                animation: 'rise-up-slow 12s cubic-bezier(0.1, 0.6, 0.3, 1) forwards'
            }}>
-              {/* Inner Wrapper for Shaking - Decays to 0 before the rise finishes */}
-              <div style={{
-                  animation: 'shake-decay 12s linear forwards'
-              }}>
-                <img 
-                    src={triggerUser.avatarBase64 || ''} 
-                    alt="Creator"
-                    style={{ 
-                        width: '300px', height: '300px', borderRadius: '50%', 
-                        boxShadow: '0 0 100px rgba(255,255,255,0.5)',
-                        display: 'block'
-                    }} 
-                />
-              </div>
+              <img 
+                  src={triggerUser.avatarBase64 || ''} 
+                  alt="Creator"
+                  style={{ 
+                      width: '300px', height: '300px', borderRadius: '50%', 
+                      boxShadow: '0 0 100px rgba(255,255,255,0.5)',
+                      display: 'block'
+                  }} 
+              />
            </div>
            
            {/* Text Container (Shows after rise ends) */}

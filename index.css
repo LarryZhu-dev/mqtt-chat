@@ -45,6 +45,12 @@ body {
   overflow-x: hidden; /* Prevent horizontal scroll from animations */
 }
 
+/* Global Body Shake Class */
+body.shake-body {
+  animation: shake-hard 0.1s infinite;
+  overflow: hidden; /* Prevent scrollbars appearing during shake */
+}
+
 ::selection {
   background-color: rgba(138, 180, 248, 0.3);
   color: #fff;
@@ -94,27 +100,27 @@ body {
 
 /* VIP Animations */
 @keyframes shake-hard {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  10% { transform: translate(-5px, -10px) rotate(-2deg); }
-  20% { transform: translate(5px, 0px) rotate(2deg); }
-  30% { transform: translate(-10px, 5px) rotate(0deg); }
-  40% { transform: translate(10px, -5px) rotate(2deg); }
-  50% { transform: translate(-5px, 10px) rotate(-2deg); }
-  60% { transform: translate(5px, -10px) rotate(0deg); }
-  70% { transform: translate(-10px, 0px) rotate(2deg); }
-  80% { transform: translate(10px, 5px) rotate(-2deg); }
+  0% { transform: translate(0px, 0px) rotate(0deg); }
+  10% { transform: translate(-5px, -5px) rotate(-1deg); }
+  20% { transform: translate(5px, 5px) rotate(1deg); }
+  30% { transform: translate(-5px, 5px) rotate(0deg); }
+  40% { transform: translate(5px, -5px) rotate(1deg); }
+  50% { transform: translate(-5px, -5px) rotate(-1deg); }
+  60% { transform: translate(5px, 5px) rotate(0deg); }
+  70% { transform: translate(-5px, 5px) rotate(1deg); }
+  80% { transform: translate(5px, -5px) rotate(-1deg); }
   90% { transform: translate(-5px, -5px) rotate(0deg); }
-  100% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(0px, 0px) rotate(0deg); }
 }
 
 @keyframes rise-up {
-  from { transform: translateY(100vh) scale(0.5); opacity: 0; }
-  to { transform: translateY(0) scale(1.5); opacity: 1; }
+  0% { transform: translateY(110vh) scale(0.5); opacity: 1; }
+  100% { transform: translateY(0) scale(1.5); opacity: 1; }
 }
 
 @keyframes danmaku-slide {
-  from { transform: translateX(100vw); }
-  to { transform: translateX(-100%); }
+  from { left: 100%; transform: translateX(0); }
+  to { left: 0; transform: translateX(-150%); }
 }
 
 /* Bubble Animations for Avatar Menu */

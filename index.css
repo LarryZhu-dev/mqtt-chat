@@ -1,28 +1,31 @@
 /* @tailwind directives removed to ensure consistency between local/CDN/AI Studio environments */
 
 :root {
-  --c-chrome-900: #202124;
-  --c-chrome-800: #292a2d;
-  --c-chrome-700: #35363a;
-  --c-chrome-600: #5f6368;
-  --c-chrome-300: #9aa0a6;
+  /* Chrome Palette */
+  --c-chrome-900: #1f2020;
+  --c-chrome-800: #282828;
+  --c-chrome-700: #3c3c3c;
+  --c-chrome-600: #4a4a4a;
+  --c-chrome-300: #c7c7c7;
   --c-chrome-100: #e8eaed;
+  
   --c-accent: #8ab4f8;
-  --c-accent-hover: #aecbfa;
+  --c-accent-hover: #a8c7fa;
+  --c-accent-text: #a8c7fa;
 }
 
 body {
   background-color: var(--c-chrome-900);
   color: var(--c-chrome-100);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background-color: var(--c-accent);
-  color: var(--c-chrome-900);
+  background-color: rgba(138, 180, 248, 0.3);
+  color: #fff;
 }
 
 /* Fallback utilities to prevent flash of unstyled content if Tailwind CDN is slow */
@@ -31,20 +34,22 @@ body {
 .text-chrome-100 { color: var(--c-chrome-100); }
 .text-chrome-300 { color: var(--c-chrome-300); }
 
-/* Custom Scrollbar for Chrome Dark feel */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #202124;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: #5f6368;
-  border-radius: 4px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #9aa0a6;
+  background-color: #9aa0a6;
 }
 
 .custom-scrollbar::-webkit-scrollbar {

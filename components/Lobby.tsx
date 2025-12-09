@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { UserProfile, RoomInfo } from '../types';
 import { generateUUID, compressImage, generateShortId } from '../utils/helpers';
-import { Users, Lock, Globe, LogIn, Upload, ShieldAlert, Info } from 'lucide-react';
+import { Users, Lock, Globe, LogIn, Upload, ShieldAlert, Info, Key, Hash } from 'lucide-react';
 import clsx from 'clsx';
 
 interface LobbyProps {
@@ -30,11 +30,9 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
   // Sync state when initialUser loads from localStorage (Async in App.tsx)
   useEffect(() => {
     if (initialUser) {
-      // Only update if state is empty or matches default, prevents overwriting user input if they typed fast
       setUsername(prev => prev ? prev : (initialUser.username || ''));
       setAvatar(prev => prev ? prev : (initialUser.avatarBase64 || null));
       
-      // Force update if it matches the generated pattern (restoring session)
       if (initialUser.username && initialUser.username.startsWith('User_') === false) {
           setUsername(initialUser.username);
       }
@@ -89,159 +87,166 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms }
 
   return (
     <div className="min-h-screen bg-chrome-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl grid md:grid-cols-2 gap-8">
+      <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 animate-fade-in">
         
         {/* Left: Configuration */}
-        <div className="bg-chrome-800 p-8 rounded-2xl border border-chrome-600 shadow-2xl">
-          <h1 className="text-3xl font-bold text-chrome-100 mb-2">Dark MQTT Chat</h1>
-          
-          <div className="bg-yellow-900/20 border border-yellow-700/50 p-4 rounded-lg mb-6 text-xs text-yellow-200/80">
-             <h3 className="font-bold flex items-center gap-2 mb-2 text-yellow-100">
-               <ShieldAlert size={14} /> 隐私与安全须知
-             </h3>
-             <ul className="space-y-1 list-disc list-inside">
-               <li>基于 EMQX 免费公共服务器，无需注册，完全匿名。</li>
-               <li><strong>注意：</strong> 消息未端到端加密，请勿发送密码等敏感信息。</li>
-               <li>私密房间 ID 即为“密钥”，请妥善保管，避免泄露。</li>
-               <li>
-                   Tip: 使用 URL <code className="bg-black/30 px-1 rounded select-all">?room=任意ID</code> 
-                   可快速创建或加入私密房间。
-               </li>
-             </ul>
+        <div className="bg-chrome-800 p-8 rounded-3xl shadow-xl flex flex-col justify-center transition-all duration-300 hover:shadow-2xl border border-chrome-700/50">
+          <div className="mb-8">
+             <h1 className="text-4xl font-bold text-chrome-100 mb-2 tracking-tight">Dark MQTT Chat</h1>
+             <p className="text-chrome-300">安全、轻量、即时的加密通讯体验</p>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
+          
+          <form onSubmit={handleSubmit} className="space-y-8">
             
             {/* Profile Section */}
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-chrome-300 uppercase tracking-wider">身份设置</label>
-              <div className="flex items-center gap-4">
-                <div className="relative w-16 h-16 rounded-full bg-chrome-700 border-2 border-chrome-600 overflow-hidden flex-shrink-0 group">
-                  {avatar ? (
-                    <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-chrome-600">
-                      <Users size={24} />
-                    </div>
-                  )}
-                  <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition">
-                    <Upload size={16} className="text-white" />
+            <div>
+              <label className="block text-xs font-bold text-accent-text uppercase tracking-wider mb-4">您的身份</label>
+              <div className="flex items-center gap-5">
+                <div className="relative group">
+                  <div className="w-20 h-20 rounded-full bg-chrome-700 overflow-hidden shadow-inner ring-2 ring-transparent group-hover:ring-accent transition-all duration-300">
+                    {avatar ? (
+                      <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-chrome-300">
+                        <Users size={32} />
+                      </div>
+                    )}
+                  </div>
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity backdrop-blur-sm">
+                    <Upload size={20} className="text-white drop-shadow-md" />
                     <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} />
                   </label>
                 </div>
+                
                 <div className="flex-1">
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="输入昵称"
-                    className="w-full bg-chrome-900 border border-chrome-600 rounded px-3 py-2 text-chrome-100 focus:border-accent focus:outline-none"
+                    placeholder="给自己起个昵称..."
+                    className="w-full bg-chrome-700 text-chrome-100 text-lg px-4 py-3 rounded-xl border-none focus:ring-2 focus:ring-accent focus:bg-chrome-700/80 transition-all placeholder-chrome-600 outline-none"
                   />
                 </div>
               </div>
             </div>
 
-            <hr className="border-chrome-600" />
-
             {/* Room Section */}
-            <div className="space-y-4">
-               <label className="block text-sm font-medium text-chrome-300 uppercase tracking-wider">房间设置</label>
+            <div>
+               <label className="block text-xs font-bold text-accent-text uppercase tracking-wider mb-4">房间设置</label>
                
-               <div className="grid grid-cols-2 gap-4">
-                 <div>
-                    <label className="text-xs text-chrome-300 mb-1 block">房间 ID</label>
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                 <div className="relative">
+                    <div className="absolute left-3 top-3 text-chrome-300"><Hash size={18}/></div>
                     <input
                         type="text"
                         value={roomIdInput}
                         onChange={(e) => setRoomIdInput(e.target.value)}
-                        placeholder="例: room123"
-                        className="w-full bg-chrome-900 border border-chrome-600 rounded px-3 py-2 text-chrome-100 focus:border-accent focus:outline-none font-mono"
+                        placeholder="房间 ID"
+                        className="w-full bg-chrome-700 pl-10 pr-4 py-3 rounded-xl text-chrome-100 focus:ring-2 focus:ring-accent outline-none font-mono transition-all"
                         maxLength={16}
                     />
                  </div>
-                 <div>
-                    <label className="text-xs text-chrome-300 mb-1 block">房间主题</label>
+                 <div className="relative">
+                    <div className="absolute left-3 top-3 text-chrome-300"><Info size={18}/></div>
                     <input
                         type="text"
                         value={topicInput}
                         onChange={(e) => setTopicInput(e.target.value)}
-                        placeholder="例: 技术交流"
-                        className="w-full bg-chrome-900 border border-chrome-600 rounded px-3 py-2 text-chrome-100 focus:border-accent focus:outline-none"
+                        placeholder="房间话题"
+                        className="w-full bg-chrome-700 pl-10 pr-4 py-3 rounded-xl text-chrome-100 focus:ring-2 focus:ring-accent outline-none transition-all"
                     />
                  </div>
                </div>
 
-               <div className="flex gap-4">
+               <div className="grid grid-cols-2 gap-3 p-1 bg-chrome-700 rounded-xl">
                   <button 
                     type="button"
                     onClick={() => setIsPublic(false)}
-                    className={clsx("flex-1 py-2 rounded border transition flex items-center justify-center gap-2", !isPublic ? "bg-accent/10 border-accent text-accent" : "border-chrome-600 text-chrome-300 hover:bg-chrome-700")}
+                    className={clsx(
+                        "py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200", 
+                        !isPublic ? "bg-chrome-800 text-accent shadow-sm" : "text-chrome-300 hover:text-chrome-100"
+                    )}
                   >
                     <Lock size={16} /> 私密房间
                   </button>
                   <button 
                     type="button"
                     onClick={() => setIsPublic(true)}
-                    className={clsx("flex-1 py-2 rounded border transition flex items-center justify-center gap-2", isPublic ? "bg-accent/10 border-accent text-accent" : "border-chrome-600 text-chrome-300 hover:bg-chrome-700")}
+                    className={clsx(
+                        "py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200", 
+                        isPublic ? "bg-chrome-800 text-accent shadow-sm" : "text-chrome-300 hover:text-chrome-100"
+                    )}
                   >
                     <Globe size={16} /> 公开大厅
                   </button>
                </div>
-               
-               <p className="text-xs text-chrome-400 flex items-start gap-1">
-                   <Info size={12} className="mt-0.5 flex-shrink-0" />
-                   {isPublic 
-                     ? "公开房间将显示在右侧列表，所有人可见。" 
-                     : "私密房间不显示在列表，需通过 ID 或 URL 进入。"
-                   }
-               </p>
             </div>
 
-            {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+            {error && (
+                <div className="flex items-center gap-2 text-red-400 text-sm bg-red-900/10 p-3 rounded-lg border border-red-900/30">
+                    <ShieldAlert size={16} /> {error}
+                </div>
+            )}
 
             <button
               type="submit"
-              className="w-full bg-accent hover:bg-accent-hover text-chrome-900 font-bold py-3 rounded-lg transition flex items-center justify-center gap-2"
+              className="w-full bg-accent hover:bg-accent-hover text-chrome-900 font-bold py-4 rounded-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-accent/20"
             >
               <LogIn size={20} /> 进入房间
             </button>
-
           </form>
         </div>
 
         {/* Right: Public Lobby List */}
-        <div className="bg-chrome-800 p-8 rounded-2xl border border-chrome-600 shadow-xl overflow-hidden flex flex-col">
-          <h2 className="text-xl font-bold text-chrome-100 mb-4 flex items-center gap-2">
-            <Globe size={20} className="text-accent" /> 公开房间大厅
-          </h2>
-          
-          <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-             {publicRooms.length === 0 ? (
-                 <div className="text-center text-chrome-600 mt-10">
-                     <p>暂无公开房间。</p>
-                     <p className="text-sm">来创建第一个吧！</p>
-                 </div>
-             ) : (
-                 publicRooms.map(room => (
-                     <div 
-                        key={room.id}
-                        onClick={() => { setRoomIdInput(room.id); setTopicInput(room.topicName); setIsPublic(true); }}
-                        className="p-4 bg-chrome-700 hover:bg-chrome-600 rounded-lg cursor-pointer transition border border-transparent hover:border-chrome-300 group"
-                     >
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h3 className="font-bold text-chrome-100 group-hover:text-accent transition">{room.topicName}</h3>
-                                <p className="text-xs text-chrome-300 font-mono">ID: {room.id}</p>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-green-400 bg-black/20 px-2 py-1 rounded-full">
-                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                                {room.onlineCount} 在线
+        <div className="flex flex-col gap-4">
+            <div className="bg-chrome-800 p-6 rounded-3xl shadow-xl flex-1 flex flex-col overflow-hidden border border-chrome-700/50">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-chrome-100 flex items-center gap-2">
+                    <Globe size={24} className="text-accent" /> 公开房间
+                </h2>
+                <span className="text-xs font-mono text-chrome-300 bg-chrome-700 px-2 py-1 rounded-md">Live</span>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                {publicRooms.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-chrome-300/50 gap-2">
+                        <Globe size={48} strokeWidth={1} />
+                        <p>暂无公开房间</p>
+                    </div>
+                ) : (
+                    publicRooms.map((room, idx) => (
+                        <div 
+                            key={room.id}
+                            onClick={() => { setRoomIdInput(room.id); setTopicInput(room.topicName); setIsPublic(true); }}
+                            className="p-4 bg-chrome-700/40 hover:bg-chrome-700 rounded-xl cursor-pointer transition-all border border-transparent hover:border-chrome-600 group animate-slide-up"
+                            style={{ animationDelay: `${idx * 50}ms` }}
+                        >
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h3 className="font-bold text-chrome-100 group-hover:text-accent transition">{room.topicName}</h3>
+                                    <p className="text-xs text-chrome-300 font-mono mt-1 flex items-center gap-1">
+                                        <Hash size={10} /> {room.id}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-xs text-green-400 bg-green-900/20 px-2.5 py-1 rounded-full border border-green-900/30">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                    {room.onlineCount}
+                                </div>
                             </div>
                         </div>
-                     </div>
-                 ))
-             )}
-          </div>
+                    ))
+                )}
+            </div>
+            </div>
+
+            <div className="bg-chrome-800 p-6 rounded-3xl shadow-xl border border-chrome-700/50">
+                <h3 className="font-bold text-chrome-100 mb-2 flex items-center gap-2 text-sm">
+                    <ShieldAlert size={16} className="text-accent" /> 隐私提示
+                </h3>
+                <p className="text-xs text-chrome-300 leading-relaxed">
+                    本应用基于公共 MQTT Broker，请勿发送敏感个人信息。私密房间 ID 即为密钥，请妥善保管。
+                </p>
+            </div>
         </div>
       </div>
     </div>

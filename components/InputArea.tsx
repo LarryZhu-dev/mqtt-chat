@@ -64,86 +64,91 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo,
   };
 
   return (
-    <div className="bg-chrome-800 p-4 border-t border-chrome-600 flex flex-col gap-2 relative">
-      {/* Reply Context */}
-      {replyingTo && (
-        <div className="flex items-center justify-between bg-chrome-700 px-3 py-2 rounded-md mb-1 text-sm border-l-4 border-accent">
-          <div className="truncate text-chrome-300">
-            回复 <span className="font-bold text-chrome-100">{replyingTo.username}</span>: {replyingTo.content.substring(0, 50)}...
+    <div className="bg-chrome-800 px-4 py-4 border-t border-chrome-600 shadow-[0_-4px_20px_rgba(0,0,0,0.2)] z-30">
+      <div className="max-w-5xl mx-auto flex flex-col gap-2 relative">
+        
+        {/* Reply Context */}
+        {replyingTo && (
+          <div className="flex items-center justify-between bg-chrome-700 px-4 py-2 rounded-xl mb-1 text-sm border-l-4 border-accent shadow-sm animate-slide-up">
+            <div className="truncate text-chrome-300">
+              回复 <span className="font-bold text-accent-text">{replyingTo.username}</span>: {replyingTo.content.substring(0, 50)}...
+            </div>
+            <button onClick={onCancelReply} className="text-chrome-300 hover:text-white p-1 hover:bg-chrome-600 rounded-full transition">
+              <X size={16} />
+            </button>
           </div>
-          <button onClick={onCancelReply} className="text-chrome-300 hover:text-white">
-            <X size={16} />
+        )}
+
+        {/* Pending Image Preview */}
+        {pendingImage && (
+            <div className="relative inline-block w-fit mb-2 group animate-bounce-in">
+                <img src={pendingImage} alt="Preview" className="h-40 rounded-xl border border-chrome-600 shadow-lg object-contain bg-black/20" />
+                <button 
+                  onClick={() => setPendingImage(null)}
+                  className="absolute -top-2 -right-2 bg-chrome-700 hover:bg-red-600 text-white rounded-full p-1.5 shadow-md border border-chrome-600 transition"
+                >
+                    <X size={14} />
+                </button>
+            </div>
+        )}
+
+        {/* Emoji Picker Popover */}
+        {showEmoji && (
+          <div className="animate-fade-in">
+            <EmojiPicker 
+                onSelect={(emoji) => { setText(prev => prev + emoji); textAreaRef.current?.focus(); }}
+                onClose={() => setShowEmoji(false)}
+            />
+          </div>
+        )}
+
+        <div className="flex items-end gap-3">
+          <button 
+              onClick={() => setShowEmoji(!showEmoji)} 
+              className="p-3 text-chrome-300 hover:text-accent transition rounded-full hover:bg-chrome-700 mb-0.5"
+              title="表情"
+          >
+            <Smile size={24} />
+          </button>
+
+          <button 
+              onClick={() => fileInputRef.current?.click()} 
+              className="p-3 text-chrome-300 hover:text-accent transition rounded-full hover:bg-chrome-700 mb-0.5"
+              title="图片"
+          >
+            <ImageIcon size={24} />
+          </button>
+          <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*" 
+              onChange={handleImageUpload} 
+          />
+
+          <div className="flex-1 bg-chrome-700 rounded-[24px] px-4 py-2 border border-transparent focus-within:border-accent focus-within:bg-chrome-700/80 transition-all flex items-center">
+            <textarea
+              ref={textAreaRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
+              placeholder="发送消息..."
+              className="w-full bg-transparent text-chrome-100 placeholder-chrome-500 focus:outline-none resize-none h-[24px] max-h-[120px] overflow-y-auto leading-6 custom-scrollbar"
+              rows={1}
+              style={{ minHeight: '24px' }}
+            />
+          </div>
+
+          <button 
+              onClick={handleSend}
+              disabled={!text.trim() && !pendingImage}
+              className="p-3 bg-accent hover:bg-accent-hover text-chrome-900 rounded-full transition disabled:opacity-30 disabled:cursor-not-allowed mb-0.5 shadow-md transform active:scale-95"
+              title="发送"
+          >
+            <Send size={20} fill={(!text.trim() && !pendingImage) ? "none" : "currentColor"} />
           </button>
         </div>
-      )}
-
-      {/* Pending Image Preview */}
-      {pendingImage && (
-          <div className="relative inline-block w-fit mb-2 group">
-              <img src={pendingImage} alt="Preview" className="h-32 rounded-lg border border-chrome-600" />
-              <button 
-                onClick={() => setPendingImage(null)}
-                className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 shadow-md hover:bg-red-700 transition"
-              >
-                  <X size={14} />
-              </button>
-          </div>
-      )}
-
-      {/* Emoji Picker Popover */}
-      {showEmoji && (
-        <EmojiPicker 
-            onSelect={(emoji) => { setText(prev => prev + emoji); textAreaRef.current?.focus(); }}
-            onClose={() => setShowEmoji(false)}
-        />
-      )}
-
-      <div className="flex items-end gap-2">
-        <button 
-            onClick={() => setShowEmoji(!showEmoji)} 
-            className="p-2 text-chrome-300 hover:text-accent transition rounded-full hover:bg-chrome-700 mb-1"
-            title="表情"
-        >
-          <Smile size={24} />
-        </button>
-
-        <button 
-            onClick={() => fileInputRef.current?.click()} 
-            className="p-2 text-chrome-300 hover:text-accent transition rounded-full hover:bg-chrome-700 mb-1"
-            title="图片"
-        >
-          <ImageIcon size={24} />
-        </button>
-        <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            accept="image/*" 
-            onChange={handleImageUpload} 
-        />
-
-        <textarea
-          ref={textAreaRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-          placeholder="输入消息..."
-          className="flex-1 bg-chrome-900 text-chrome-100 border border-chrome-600 rounded-xl px-4 py-3 focus:outline-none focus:border-accent resize-none h-[50px] max-h-[150px] overflow-y-auto leading-normal"
-          rows={1}
-        />
-
-        <button 
-            onClick={handleSend}
-            disabled={!text.trim() && !pendingImage}
-            className="p-3 bg-accent hover:bg-accent-hover text-chrome-900 rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed mb-1"
-            title="发送"
-        >
-          <Send size={20} />
-        </button>
-      </div>
-      <div className="text-xs text-chrome-300 text-center mt-1">
-         支持粘贴截图 • F8 清屏
       </div>
     </div>
   );

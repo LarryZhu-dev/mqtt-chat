@@ -206,18 +206,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
               return changed ? next : prev;
           });
 
-      }, 5000); // Check every 5 seconds (but heartbeats are sent every 10s based on HEARTBEAT_INTERVAL usually, let's align logic)
-
-      // Separate explicit heartbeat sender (can be same interval, but logical separation is fine)
-      const hbSender = setInterval(() => {
-          if (mqttRef.current && isConnected) {
-               // Logic handled in the main interval above for simplicity to avoid race conditions on state
-          }
-      }, HEARTBEAT_INTERVAL);
+      }, 5000); 
 
       return () => {
           clearInterval(interval);
-          clearInterval(hbSender);
       };
   }, [isConnected, initialRoom.id, user, roomConfig, onlineUsers.size]);
 
@@ -234,23 +226,15 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
           setVoteTimeLeft(left);
 
           if (elapsed > VOTE_TIMEOUT) {
-              // Time is up!
               if (activeVote.initiatorId === user.clientId) {
-                  // I am the initiator, I am responsible for finalizing the vote
                   console.log("Vote timeout - Defaulting to PASS");
                   const newConfig = { ...roomConfigRef.current!, isPublic: activeVote.targetState };
                   mqttRef.current?.publishRoomConfig(initialRoom.id, newConfig);
                   if (!newConfig.isPublic) {
                       mqttRef.current?.clearPublicRoomListing(initialRoom.id);
                   }
-                  // Clear vote handled by state update locally, or via sending a clear message? 
-                  // Since we don't have a "vote success" message type other than config update,
-                  // We manually clear it locally. Ideally we send a "vote_end" but config update serves as trigger.
-                  // However, let's just clear it.
                   setActiveVote(null);
-                  // We should probably broadcast that the vote ended, but changing config effectively does that.
               } else {
-                   // For others, just clear the UI
                    setActiveVote(null);
               }
           }
@@ -314,23 +298,16 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
               timestamp: payload.timestamp || Date.now()
           });
       } else if (payload.type === 'ballot' && currentVote && payload.voteId === currentVote.id) {
-          // If Veto -> Fail immediately
           if (payload.decision === 'veto') {
               setActiveVote(null);
-              // alert(`用户 ${payload.voterId} 否决了房间属性变更。`);
               return;
           }
 
-          // Update votes
           const newVotes = new Map(currentVote.votes);
           newVotes.set(payload.voterId!, true);
-          
           setActiveVote(prev => prev ? { ...prev, votes: newVotes } : null);
 
-          // Check for Unanimous Agreement
-          // Pass if Agree Count >= Current Online Users
           if (newVotes.size >= currentUsers.size) {
-             // Pass! Only Initiator executes
              if (currentVote.initiatorId === user.clientId) {
                  const newConfig = { ...currentConfig!, isPublic: currentVote.targetState };
                  mqttRef.current?.publishRoomConfig(initialRoom.id, newConfig);
@@ -350,16 +327,13 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
   };
 
   const sendMessage = (text: string, imageBase64?: string) => {
-    // Correct type determination logic
     let type: 'text' | 'image' | 'mixed' = 'text';
     if (imageBase64 && text) type = 'mixed';
     else if (imageBase64) type = 'image';
 
-    // Generate Reply Snapshot
     let replySummary = undefined;
     if (replyingTo) {
         let content = getMessageSummary(replyingTo);
-        // Truncate for storage
         if (content.length > 50) content = content.substring(0, 50) + '...';
         
         replySummary = {
@@ -372,7 +346,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       id: generateUUID(),
       type: type,
       content: text, 
-      imageUrl: imageBase64, // Ensure image is in imageUrl
+      imageUrl: imageBase64, 
       senderId: user.clientId,
       senderUsername: user.username,
       timestamp: Date.now(),
@@ -384,9 +358,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
     if (isConnected && mqttRef.current) {
         mqttRef.current.sendMessage(initialRoom.id, newMsg);
     } else {
-        // Offline Queueing
         offlineQueueRef.current.push(newMsg);
-        // Optimistic UI update (optional, but good for UX)
         setMessages(prev => [...prev, newMsg]);
     }
     setReplyingTo(null);
@@ -406,8 +378,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       const el = document.getElementById(`msg-${id}`);
       if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          el.classList.add('bg-chrome-600/30');
-          setTimeout(() => el.classList.remove('bg-chrome-600/30'), 1000);
+          el.classList.add('bg-accent/20');
+          setTimeout(() => el.classList.remove('bg-accent/20'), 1000);
       }
   };
 
@@ -429,7 +401,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       onLeave();
   };
 
-  // Voting Actions
   const startVote = (targetState: boolean) => {
       if (!mqttRef.current) return;
       const voteId = generateUUID();
@@ -456,16 +427,13 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       mqttRef.current.sendVote(initialRoom.id, payload);
   };
 
-  // Global Right Click Handler
   const handleGlobalContextMenu = (e: React.MouseEvent) => {
-      // Only trigger if clicking on the background (container)
       if (e.target === containerRef.current) {
           e.preventDefault();
           setGlobalContextMenu({ x: e.clientX, y: e.clientY });
       }
   };
 
-  // Close menus on click
   useEffect(() => {
       const handleClick = () => {
           setGlobalContextMenu(null);
@@ -476,68 +444,63 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
   }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-chrome-900 overflow-hidden relative">
+    <div className="flex flex-col h-screen bg-chrome-900 overflow-hidden relative animate-fade-in">
       {/* Header */}
-      <header className="flex-shrink-0 bg-chrome-800 border-b border-chrome-600 px-4 py-3 flex items-center justify-between shadow-md z-10">
-        <div className="flex items-center gap-3 overflow-hidden">
-             {/* Connection Status Indicator */}
-             <div className="flex items-center gap-1.5" title={isConnected ? "已连接" : "已断开"}>
-                 {isConnected ? (
-                     <Wifi size={16} className="text-green-500" />
+      <header className="flex-shrink-0 bg-chrome-800/90 backdrop-blur-md border-b border-chrome-600 px-6 py-4 flex items-center justify-between shadow-lg z-20 transition-all">
+        <div className="flex items-center gap-4 overflow-hidden">
+             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-chrome-700">
+                {isConnected ? (
+                     <Wifi size={16} className="text-green-400" />
                  ) : (
                      <WifiOff size={16} className="text-red-500" />
                  )}
              </div>
 
-             <div className="min-w-0">
+             <div className="min-w-0 flex flex-col justify-center">
                  <h2 className="font-bold text-chrome-100 truncate flex items-center gap-2 text-lg">
                      {roomConfig?.topicName || initialRoom.topicName}
                      {roomConfig && (
-                         roomConfig.isPublic ? <Globe size={16} className="text-accent" /> : <Lock size={16} className="text-chrome-300" />
+                         roomConfig.isPublic ? <Globe size={14} className="text-accent" /> : <Lock size={14} className="text-chrome-300" />
                      )}
-                     
-                     {/* Copy Link Button - Moved to Header */}
-                     <button 
-                        onClick={handleCopyLink}
-                        className="ml-2 p-1.5 text-chrome-300 hover:text-white hover:bg-chrome-700 rounded-full transition flex items-center gap-1 group relative"
-                        title="复制房间链接"
-                     >
-                         {isCopied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
-                         {/* Tooltip confirmation */}
-                         {isCopied && (
-                             <span className="absolute left-full ml-2 text-xs bg-black text-white px-2 py-1 rounded shadow-lg whitespace-nowrap animate-in fade-in zoom-in-50 duration-200">
-                                 复制成功!
-                             </span>
-                         )}
-                     </button>
                  </h2>
-                 <p className="text-xs text-chrome-300 font-mono truncate">ID: {initialRoom.id}</p>
+                 <div className="flex items-center gap-2 text-xs text-chrome-300 font-mono">
+                    <span>ID: {initialRoom.id}</span>
+                    <button 
+                        onClick={handleCopyLink}
+                        className="hover:text-accent transition-colors flex items-center gap-1 group relative"
+                        title="点击复制链接"
+                    >
+                         {isCopied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                    </button>
+                 </div>
              </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
              <button 
                 onClick={(e) => { e.stopPropagation(); setShowUserList(true); }}
-                className="hidden sm:flex items-center gap-2 text-chrome-300 text-sm bg-black/20 px-3 py-1 rounded-full hover:bg-black/30 transition"
+                className="hidden sm:flex items-center gap-2 text-chrome-300 text-sm bg-chrome-700 hover:bg-chrome-600 px-3 py-1.5 rounded-full transition-all border border-transparent hover:border-chrome-600"
              >
-                 <Users size={14} />
+                 <Users size={16} />
                  <span>{onlineUsers.size}</span>
              </button>
              
+             <div className="h-6 w-px bg-chrome-600 mx-1"></div>
+
              <button
                 onClick={(e) => { e.stopPropagation(); setShowSettings(!showSettings); }}
-                className="p-2 text-chrome-300 hover:text-white transition hover:bg-chrome-700 rounded-full"
+                className="p-2 text-chrome-300 hover:text-accent transition hover:bg-chrome-700/50 rounded-full"
                 title="设置"
              >
-                 <Settings size={18} />
+                 <Settings size={20} />
              </button>
 
              <button 
                 onClick={handleLeaveClick} 
-                className="p-2 text-chrome-300 hover:text-white hover:bg-red-600/80 rounded transition flex items-center gap-2 text-sm ml-1"
+                className="p-2 text-chrome-300 hover:text-red-400 hover:bg-red-900/20 rounded-full transition flex items-center gap-2"
                 title="退出房间"
              >
-                 <LogOut size={18} />
+                 <LogOut size={20} />
              </button>
         </div>
       </header>
@@ -547,14 +510,14 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       {/* Global Context Menu */}
       {globalContextMenu && (
           <div 
-             className="fixed z-50 bg-chrome-800 border border-chrome-600 rounded shadow-2xl py-1 min-w-[120px]"
+             className="fixed z-50 bg-chrome-800 border border-chrome-600 rounded-lg shadow-2xl py-1 min-w-[140px] animate-fade-in"
              style={{ top: globalContextMenu.y, left: globalContextMenu.x }}
           >
               <button 
                  onClick={() => setMessages([])}
-                 className="w-full px-4 py-2 hover:bg-chrome-700 text-left text-sm text-chrome-100 flex items-center gap-2"
+                 className="w-full px-4 py-2.5 hover:bg-chrome-700 text-left text-sm text-chrome-100 flex items-center gap-2"
               >
-                  <Trash2 size={14} /> 清屏 (F8)
+                  <Trash2 size={16} /> 清空屏幕 (F8)
               </button>
           </div>
       )}
@@ -563,37 +526,39 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       {showSettings && roomConfig && (
           <div 
             onClick={e => e.stopPropagation()}
-            className="absolute top-16 right-4 z-50 w-72 bg-chrome-800 border border-chrome-600 shadow-2xl rounded-xl p-4 animate-in fade-in zoom-in-95 duration-200"
+            className="absolute top-20 right-6 z-50 w-80 bg-chrome-800/95 backdrop-blur border border-chrome-600 shadow-2xl rounded-2xl p-5 animate-bounce-in"
           >
-              <h3 className="text-chrome-100 font-bold mb-3 flex items-center gap-2">
-                  <Settings size={16} /> 房间设置
+              <h3 className="text-chrome-100 font-bold mb-4 flex items-center gap-2 text-lg">
+                  <Settings size={20} /> 房间设置
               </h3>
               
-              <div className="space-y-4">
-                  <div className="bg-chrome-900 p-3 rounded border border-chrome-600">
-                      <p className="text-xs text-chrome-300 mb-1">当前隐私状态</p>
-                      <div className="flex items-center gap-2 text-sm font-medium text-chrome-100">
-                          {roomConfig.isPublic ? <Globe size={16} className="text-green-400"/> : <Lock size={16} className="text-yellow-400"/>}
-                          {roomConfig.isPublic ? "公开房间 (显示在大厅)" : "私密房间"}
+              <div className="space-y-5">
+                  <div className="bg-chrome-700/50 p-4 rounded-xl border border-chrome-600/50">
+                      <p className="text-xs text-chrome-300 mb-2 uppercase tracking-wide">隐私模式</p>
+                      <div className="flex items-center gap-2 text-base font-medium text-chrome-100">
+                          {roomConfig.isPublic ? <Globe size={20} className="text-green-400"/> : <Lock size={20} className="text-yellow-400"/>}
+                          {roomConfig.isPublic ? "公开房间" : "私密房间"}
                       </div>
                   </div>
 
                   {!activeVote ? (
                       <button 
                         onClick={() => startVote(!roomConfig.isPublic)}
-                        className="w-full py-2 bg-chrome-700 hover:bg-chrome-600 text-chrome-100 text-sm rounded transition border border-chrome-600"
+                        className="w-full py-3 bg-chrome-700 hover:bg-accent hover:text-chrome-900 text-chrome-100 text-sm font-medium rounded-xl transition-all border border-chrome-600 hover:border-accent shadow-sm"
                       >
                           申请更改为 {roomConfig.isPublic ? '私密' : '公开'}
                       </button>
                   ) : (
-                      <div className="p-2 bg-accent/10 border border-accent/20 rounded text-xs text-accent text-center">
+                      <div className="p-3 bg-accent/10 border border-accent/20 rounded-xl text-xs text-accent text-center animate-pulse">
                           正在进行变更投票...
                       </div>
                   )}
 
-                  <div className="pt-2 border-t border-chrome-700">
-                      <p className="text-[10px] text-chrome-400">房主: {roomConfig.createdBy}</p>
-                      <p className="text-[10px] text-chrome-400">创建时间: {new Date(roomConfig.createdAt).toLocaleDateString()}</p>
+                  <div className="pt-4 border-t border-chrome-700">
+                      <div className="flex justify-between text-[11px] text-chrome-400">
+                        <span>房主: {roomConfig.createdBy}</span>
+                        <span>{new Date(roomConfig.createdAt).toLocaleDateString()}</span>
+                      </div>
                   </div>
               </div>
           </div>
@@ -601,52 +566,49 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
 
       {/* 2. Voting Overlay */}
       {activeVote && (
-          <div className="absolute top-20 left-1/2 -translate-x-1/2 z-40 bg-chrome-800 border-2 border-accent shadow-2xl rounded-lg p-4 w-80 animate-bounce-in">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-bold text-white flex items-center gap-2">
-                    <ShieldAlert className="text-accent" size={20} /> 
-                    房间属性变更请求
+          <div className="absolute top-24 left-1/2 -translate-x-1/2 z-40 bg-chrome-800/95 backdrop-blur border-2 border-accent shadow-[0_0_30px_rgba(138,180,248,0.2)] rounded-2xl p-6 w-96 animate-bounce-in">
+              <div className="flex justify-between items-start mb-4">
+                <h4 className="font-bold text-white flex items-center gap-2 text-lg">
+                    <ShieldAlert className="text-accent" size={24} /> 
+                    变更请求
                 </h4>
-                <div className="flex items-center gap-1 text-xs font-mono text-chrome-300 bg-black/30 px-2 py-0.5 rounded">
-                    <Clock size={12} /> {voteTimeLeft}s
+                <div className="flex items-center gap-1.5 text-xs font-mono text-accent bg-accent/10 px-2.5 py-1 rounded-full">
+                    <Clock size={14} /> {voteTimeLeft}s
                 </div>
               </div>
 
               {/* Progress bar */}
-              <div className="w-full bg-chrome-700 h-1 rounded-full mb-3 overflow-hidden">
+              <div className="w-full bg-chrome-700 h-1.5 rounded-full mb-4 overflow-hidden">
                   <div 
-                    className="bg-accent h-full transition-all duration-1000 ease-linear"
+                    className="bg-accent h-full transition-all duration-1000 ease-linear shadow-[0_0_10px_#8ab4f8]"
                     style={{ width: `${(voteTimeLeft / 60) * 100}%` }}
                   />
               </div>
 
-              <p className="text-sm text-chrome-300 mb-4">
-                  用户请求将房间更改为 
-                  <strong className="text-white mx-1">{activeVote.targetState ? '公开' : '私密'}</strong>
-                  。
-                  <br/>
-                  <span className="text-xs text-chrome-400 mt-1 block">* 超时无人否决将自动通过。</span>
+              <p className="text-sm text-chrome-300 mb-6 leading-relaxed">
+                  有用户请求将当前房间更改为 
+                  <strong className="text-white mx-1 px-1 bg-chrome-700 rounded">{activeVote.targetState ? '公开' : '私密'}</strong>
+                  状态。
               </p>
               
-              <div className="flex items-center justify-between text-xs text-chrome-400 mb-3 bg-chrome-900 p-2 rounded">
-                 <span>已同意: {activeVote.votes.size} / {onlineUsers.size}</span>
-                 {/* Check if I voted */}
-                 {activeVote.votes.has(user.clientId) && <span className="text-green-400">已投票</span>}
+              <div className="flex items-center justify-between text-xs text-chrome-400 mb-4 bg-chrome-900/50 p-3 rounded-xl border border-chrome-700/50">
+                 <span>同意人数: {activeVote.votes.size} / {onlineUsers.size}</span>
+                 {activeVote.votes.has(user.clientId) && <span className="text-green-400 font-bold flex items-center gap-1"><Check size={12}/> 已投票</span>}
               </div>
 
               {!activeVote.votes.has(user.clientId) && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                       <button 
                         onClick={() => castVote('agree')}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded text-sm font-bold flex items-center justify-center gap-1"
+                        className="flex-1 bg-green-600 hover:bg-green-500 text-white py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-900/20"
                       >
-                          <Check size={14} /> 同意
+                          <Check size={18} /> 同意
                       </button>
                       <button 
                         onClick={() => castVote('veto')}
-                        className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded text-sm font-bold flex items-center justify-center gap-1"
+                        className="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-red-900/20"
                       >
-                          <X size={14} /> 否决
+                          <X size={18} /> 否决
                       </button>
                   </div>
               )}
@@ -655,38 +617,37 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
 
       {/* 3. User List Modal */}
       {showUserList && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowUserList(false)}>
-              <div className="bg-chrome-800 border border-chrome-600 rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                  <div className="p-4 border-b border-chrome-700 flex justify-between items-center">
-                      <h3 className="font-bold text-chrome-100 flex items-center gap-2"><Users size={18}/> 在线用户 ({onlineUsers.size})</h3>
-                      <button onClick={() => setShowUserList(false)} className="text-chrome-400 hover:text-white"><X size={20}/></button>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowUserList(false)}>
+              <div className="bg-chrome-800 border border-chrome-600 rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                  <div className="p-5 border-b border-chrome-700 flex justify-between items-center bg-chrome-800">
+                      <h3 className="font-bold text-chrome-100 flex items-center gap-2 text-lg"><Users size={20}/> 在线用户 ({onlineUsers.size})</h3>
+                      <button onClick={() => setShowUserList(false)} className="text-chrome-400 hover:text-white transition"><X size={24}/></button>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar bg-chrome-900">
                       {Array.from(onlineUsers.values()).map((u: OnlineUser) => (
-                          <div key={u.clientId} className="flex items-center gap-3 p-2 rounded hover:bg-chrome-700 transition">
-                              <div className="w-10 h-10 rounded-full bg-chrome-600 overflow-hidden border border-chrome-500">
+                          <div key={u.clientId} className="flex items-center gap-4 p-3 rounded-xl hover:bg-chrome-800 transition border border-transparent hover:border-chrome-700">
+                              <div className="w-12 h-12 rounded-full bg-chrome-700 overflow-hidden border-2 border-chrome-600">
                                   {u.avatarBase64 ? (
                                       <img src={u.avatarBase64} alt={u.username} className="w-full h-full object-cover"/>
                                   ) : (
-                                      <div className="w-full h-full flex items-center justify-center font-bold text-sm">
-                                          {u.username.substring(0, 2).toUpperCase()}
+                                      <div className="w-full h-full flex items-center justify-center font-bold text-lg text-chrome-300">
+                                          {u.username.substring(0, 1).toUpperCase()}
                                       </div>
                                   )}
                               </div>
-                              <div className="flex-1">
-                                  <div className="flex justify-between items-center">
-                                      <p className="text-chrome-100 font-medium flex items-center gap-2">
+                              <div className="flex-1 min-w-0">
+                                  <div className="flex justify-between items-center mb-1">
+                                      <p className="text-chrome-100 font-bold truncate pr-2 flex items-center gap-2">
                                           {u.username}
-                                          {u.clientId === user.clientId && <span className="text-[10px] bg-accent/20 text-accent px-1.5 rounded">我</span>}
+                                          {u.clientId === user.clientId && <span className="text-[10px] bg-accent text-chrome-900 px-1.5 py-0.5 rounded font-bold">ME</span>}
                                       </p>
-                                      {/* Show signal strength/last seen roughly */}
                                       {Date.now() - u.lastSeen < 12000 ? (
-                                          <div className="w-2 h-2 rounded-full bg-green-500" title="Online" />
+                                          <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]" title="Online" />
                                       ) : (
-                                          <div className="w-2 h-2 rounded-full bg-yellow-500" title="Idle" />
+                                          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" title="Idle" />
                                       )}
                                   </div>
-                                  <p className="text-xs text-chrome-400 font-mono">{u.clientId.substring(0, 8)}...</p>
+                                  <p className="text-xs text-chrome-400 font-mono truncate opacity-60">{u.clientId}</p>
                               </div>
                           </div>
                       ))}
@@ -695,16 +656,19 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
           </div>
       )}
 
-      {/* Messages */}
+      {/* Messages Area */}
       <div 
-        className="flex-1 overflow-y-auto p-4 custom-scrollbar flex flex-col" 
+        className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar flex flex-col bg-chrome-900" 
         ref={containerRef} 
         onContextMenu={handleGlobalContextMenu}
       >
         <div className="flex-1" />
         {messages.length === 0 && (
-             <div className="text-center text-chrome-600 my-10 italic text-sm">
-                 已加入房间。等待消息中...
+             <div className="flex flex-col items-center justify-center text-chrome-600 my-10 opacity-50 select-none">
+                 <div className="w-16 h-16 rounded-2xl bg-chrome-800 mb-4 flex items-center justify-center">
+                    <Globe size={32} />
+                 </div>
+                 <p className="text-sm">房间已就绪，开始聊天吧</p>
              </div>
         )}
         {messages.map((msg) => (
@@ -712,7 +676,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
             key={msg.id} 
             message={msg} 
             isMe={msg.senderId === user.clientId}
-            senderProfile={onlineUsers.get(msg.senderId)} // Pass cached profile
+            senderProfile={onlineUsers.get(msg.senderId)}
             onReply={setReplyingTo}
             onReact={sendReaction}
             onDeleteLocal={handleDeleteLocal}

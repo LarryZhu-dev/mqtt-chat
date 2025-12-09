@@ -14,16 +14,39 @@
             extend: {
               colors: {
                 chrome: {
-                  900: '#202124', // Background
-                  800: '#292a2d', // Surface/Cards
-                  700: '#35363a', // Hover states
-                  600: '#5f6368', // Borders
-                  300: '#9aa0a6', // Secondary Text
-                  100: '#e8eaed', // Primary Text
+                  900: '#1f2020', // Main Background
+                  800: '#282828', // Surface/Cards/Sidebar
+                  700: '#3c3c3c', // Inputs/Hover states
+                  600: '#4a4a4a', // Borders (Synthesized slightly lighter than 700)
+                  500: '#5f6368', // Disabled/Placeholder
+                  300: '#c7c7c7', // Icons / Secondary Text
+                  100: '#e8eaed', // Primary Text (High contrast)
                 },
                 accent: {
-                  DEFAULT: '#8ab4f8', // Link/Action blue
-                  hover: '#aecbfa',
+                  DEFAULT: '#8ab4f8', // Button Background
+                  hover: '#a8c7fa',   // Lighter blue for hover
+                  text: '#a8c7fa',    // Action Text
+                }
+              },
+              animation: {
+                'fade-in': 'fadeIn 0.4s ease-out',
+                'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                'bounce-in': 'bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55)',
+              },
+              keyframes: {
+                fadeIn: {
+                  '0%': { opacity: '0' },
+                  '100%': { opacity: '1' },
+                },
+                slideUp: {
+                  '0%': { transform: 'translateY(20px)', opacity: '0' },
+                  '100%': { transform: 'translateY(0)', opacity: '1' },
+                },
+                bounceIn: {
+                  '0%': { transform: 'scale(0.3)', opacity: '0' },
+                  '50%': { transform: 'scale(1.05)' },
+                  '70%': { transform: 'scale(0.9)' },
+                  '100%': { transform: 'scale(1)', opacity: '1' },
                 }
               }
             }

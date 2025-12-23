@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { UserProfile, RoomInfo, BrokerConfig } from '../types';
 import { generateUUID, compressImage, generateShortId, generateRandomUsername, generateAvatarFromSeed, getStoredBroker, saveBroker, deleteBroker } from '../utils/helpers';
@@ -172,7 +171,7 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
                 </div>
                 <div className="flex-1 relative">
                   <input type="text" value={username} onChange={(e) => { setUsername(e.target.value); setIsCustomUsername(true); }} placeholder="给自己起个昵称..." className="styled-input" style={{ paddingRight: '40px' }} />
-                  <button type="button" onClick={handleRefreshUsername} className="btn-icon" style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)' }}><RefreshCw size={16} title="随机名字" /></button>
+                  <button type="button" onClick={handleRefreshUsername} className="btn-icon" style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)' }} title="随机名字"><RefreshCw size={16} /></button>
                 </div>
               </div>
               {!isCustomAvatar && <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>头像根据昵称实时生成 (Pixel Art)</p>}

@@ -387,7 +387,7 @@ body {
   color: white;
   border-radius: 50%;
   width: 20px; height: 20px;
-  display: flex; items-center; justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   border: none; cursor: pointer;
 }
 

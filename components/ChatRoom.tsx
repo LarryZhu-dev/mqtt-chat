@@ -382,7 +382,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
                 {isConnected ? <Wifi size={18} color="#4caf50" /> : <WifiOff size={18} color="#ef5350" />}
              </div>
              <div className="flex flex-col justify-center overflow-hidden">
-                 <h2 className="flex items-center gap-2">
+                 <h2 className="flex items-center gap-2 margin-0">
                      {roomConfig?.topicName || initialRoom.topicName}
                      {initialRoom.isCustom ? <Server size={14} color="var(--accent)" /> : roomConfig && (roomConfig.isPublic ? <Globe size={14} color="var(--accent)" /> : <Lock size={14} color="var(--text-secondary)" />)}
                  </h2>

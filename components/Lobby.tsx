@@ -55,7 +55,17 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
   const avatarContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-     if(!roomIdInput) handleRefreshRoomId();
+     // Fix: Initialize Room ID from URL if available, otherwise generate random
+     const params = new URLSearchParams(window.location.search);
+     const roomParam = params.get('room');
+     if (roomParam) {
+         const cleanId = roomParam.replace(/[^a-zA-Z0-9]/g, '');
+         setRoomIdInput(cleanId);
+         setTopicInput(cleanId);
+     } else if(!roomIdInput) {
+         handleRefreshRoomId();
+     }
+     
      if(!username) handleRefreshUsername();
      
      // If entering via URL for a custom broker
@@ -65,13 +75,13 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
          // Check if we have matching saved credentials
          const stored = getStoredBroker();
          if (stored && stored.host === urlBroker.host && stored.port === urlBroker.port) {
-             // We have stored credentials for this host, pre-fill them
              setUrlBrokerAuthForm({
                  username: stored.username || '',
                  password: stored.password || ''
              });
-             // We still show the modal to let user confirm/change, 
-             // but it's pre-filled as per "reuse stored credentials"
+             // We show the modal but it's pre-filled. 
+             // Requirement says "reuse if stored", App.tsx will attempt auto-join.
+             // If we are here, it means App.tsx couldn't silent-join or user needs to confirm.
              setShowUrlBrokerAuth(true);
          } else {
              setShowUrlBrokerAuth(true);
@@ -94,7 +104,11 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
     setIsCustomUsername(false); 
   };
 
-  const handleRefreshRoomId = () => { setRoomIdInput(generateShortId(6)); };
+  const handleRefreshRoomId = () => { 
+      const newId = generateShortId(6);
+      setRoomIdInput(newId); 
+      setTopicInput(newId);
+  };
 
   const handleRandomAvatar = () => {
       setIsCustomAvatar(false);

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Lobby } from './components/Lobby';
 import { ChatRoom } from './components/ChatRoom';
 import { UserProfile, RoomInfo, PublicRoomPayload, BrokerConfig } from './types';
-import { getStoredUser, saveUser, generateUUID, generateRandomUsername } from './utils/helpers';
+import { getStoredUser, saveUser, generateUUID, generateRandomUsername, getStoredBroker } from './utils/helpers';
 import { MqttService } from './services/mqttService';
 import { Crown, Check, X } from 'lucide-react';
 
@@ -20,6 +20,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const sessionClientId = `web_${generateUUID()}`;
     const stored = getStoredUser();
+    const storedBroker = getStoredBroker();
     const params = new URLSearchParams(window.location.search);
     const roomParam = params.get('room');
     const brokerParam = params.get('b');
@@ -52,6 +53,18 @@ const App: React.FC = () => {
     if (roomParam) {
         const roomId = roomParam.replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
         if (roomId) {
+            let finalBroker = brokerFromUrl;
+            let shouldAutoJoin = !brokerFromUrl; // Default EMQX rooms auto-join
+
+            // Requirement: If it's a custom broker and we have stored matching credentials, reuse them.
+            if (brokerFromUrl && storedBroker && 
+                storedBroker.host === brokerFromUrl.host && 
+                storedBroker.port === brokerFromUrl.port &&
+                storedBroker.username) {
+                finalBroker = { ...brokerFromUrl, username: storedBroker.username, password: storedBroker.password };
+                shouldAutoJoin = true; // Credentials found, we can attempt auto-join
+            }
+
             const room: RoomInfo = {
                 id: roomId,
                 topicName: roomId,
@@ -59,14 +72,11 @@ const App: React.FC = () => {
                 onlineCount: 0,
                 lastActivity: Date.now(),
                 isCustom: !!brokerFromUrl,
-                customBroker: brokerFromUrl || undefined
+                customBroker: finalBroker || undefined
             };
-            // If it's a standard room (not custom), we can auto-join if we have basic user info
-            // For custom rooms, we stay on Lobby to let them enter password if needed
-            if (!brokerFromUrl) {
+            
+            if (shouldAutoJoin) {
                 setCurrentRoom(room);
-            } else {
-                // If it's custom, we set it in the Lobby state via urlBroker prop
             }
         }
     }

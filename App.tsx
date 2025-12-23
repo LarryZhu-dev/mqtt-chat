@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Lobby } from './components/Lobby';
 import { ChatRoom } from './components/ChatRoom';
@@ -161,6 +160,7 @@ const App: React.FC = () => {
 
   const handleLeave = () => {
     setCurrentRoom(null);
+    setUrlBroker(null);
     window.history.pushState({}, '', window.location.pathname);
   };
 

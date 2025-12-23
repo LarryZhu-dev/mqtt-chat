@@ -1,7 +1,8 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { UserProfile, RoomInfo, BrokerConfig } from '../types';
 import { generateUUID, compressImage, generateShortId, generateRandomUsername, generateAvatarFromSeed, getStoredBroker, saveBroker, deleteBroker } from '../utils/helpers';
-import { Users, Lock, Globe, LogIn, Upload, ShieldAlert, Info, Hash, RefreshCw, Shuffle, Edit2, Server, X, Check, Activity, Github } from 'lucide-react';
+import { Users, Lock, Globe, LogIn, Upload, ShieldAlert, Info, Hash, RefreshCw, Shuffle, Edit2, Server, X, Check, Activity, Github, Key } from 'lucide-react';
 import { MqttService } from '../services/mqttService';
 import clsx from 'clsx';
 
@@ -26,7 +27,9 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
   const [error, setError] = useState('');
 
   const [showBrokerModal, setShowBrokerModal] = useState(false);
+  const [showUrlBrokerAuth, setShowUrlBrokerAuth] = useState(false);
   const [savedBroker, setSavedBroker] = useState<BrokerConfig | null>(getStoredBroker());
+  
   const [brokerForm, setBrokerForm] = useState<BrokerConfig>(savedBroker || {
     host: '',
     port: 8084,
@@ -34,8 +37,15 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
     password: '',
     path: '/mqtt'
   });
+
+  const [urlBrokerAuthForm, setUrlBrokerAuthForm] = useState({
+      username: '',
+      password: ''
+  });
+
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<'success' | 'fail' | null>(null);
+  const [testError, setTestError] = useState('');
 
   const [isJoining, setIsJoining] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
@@ -47,8 +57,13 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
   useEffect(() => {
      if(!roomIdInput) handleRefreshRoomId();
      if(!username) handleRefreshUsername();
-     if (urlBroker) setRoomType(2);
-  }, []);
+     
+     // If entering via URL for a custom broker
+     if (urlBroker) {
+         setRoomType(2);
+         setShowUrlBrokerAuth(true);
+     }
+  }, [urlBroker]);
 
   // Update avatar whenever username changes, if it's not a manually uploaded one
   useEffect(() => {
@@ -68,8 +83,6 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
   const handleRefreshRoomId = () => { setRoomIdInput(generateShortId(6)); };
 
   const handleRandomAvatar = () => {
-      // Re-randomizing avatar for same username? We just toggle isCustomAvatar off
-      // so it follows the username again
       setIsCustomAvatar(false);
       handleCloseAvatarMenu();
   };
@@ -93,6 +106,60 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
       testClient.connect(() => { clearTimeout(timeout); testClient.disconnect(); setTestResult('success'); setIsTesting(false); });
   };
 
+  const handleJoinWithUrlBroker = () => {
+      if (!urlBroker) return;
+      setIsTesting(true); setTestResult(null); setTestError('');
+      
+      const fullConfig: BrokerConfig = {
+          ...urlBroker,
+          username: urlBrokerAuthForm.username,
+          password: urlBrokerAuthForm.password
+      };
+
+      const testClient = new MqttService(`test_${generateShortId(4)}`, fullConfig);
+      let timeout = setTimeout(() => { 
+          testClient.disconnect(); 
+          setTestResult('fail'); 
+          setTestError('连接超时，请检查配置或网络状态');
+          setIsTesting(false); 
+      }, 10000);
+
+      testClient.connect(() => { 
+          clearTimeout(timeout); 
+          testClient.disconnect(); 
+          setTestResult('success'); 
+          setIsTesting(false);
+          
+          // If successful, immediately join the room
+          setTimeout(() => {
+              setShowUrlBrokerAuth(false);
+              const cleanRoomId = roomIdInput.replace(/[^a-zA-Z0-9]/g, '');
+              const user: UserProfile = { 
+                  clientId: initialUser?.clientId || `web_${generateUUID()}`, 
+                  username: username.trim() || 'Anonymous', 
+                  avatarBase64: avatar, 
+                  avatarColor: avatarColor, 
+                  vipCode: initialUser?.vipCode 
+              };
+              const room: RoomInfo = { 
+                  id: cleanRoomId, 
+                  topicName: topicInput.trim() || cleanRoomId, 
+                  isPublic: false, 
+                  onlineCount: 0, 
+                  lastActivity: Date.now(), 
+                  isCustom: true, 
+                  customBroker: fullConfig 
+              };
+              onJoin(user, room, { saveUsername: isCustomUsername, saveAvatar: isCustomAvatar });
+          }, 500);
+      });
+  };
+
+  const handleCancelUrlAuth = () => {
+      // Return to homepage (Lobby without params)
+      window.location.href = window.location.pathname;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim()) { setError('请输入用户名'); return; }
@@ -100,6 +167,9 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
     if (cleanRoomId.length === 0) { setError('房间号格式不正确'); return; }
 
     let activeBroker: BrokerConfig | undefined = (roomType === 2) ? (urlBroker || savedBroker || undefined) : undefined;
+    
+    // If it's a custom room and we are missing credentials (only applicable for the manually configed one, 
+    // shared link handled by handleJoinWithUrlBroker)
     if (roomType === 2 && !activeBroker) { setError('请先配置自定义 Broker'); return; }
 
     setIsJoining(true);
@@ -247,6 +317,56 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
             </div>
         </div>
       </div>
+
+      {/* Auth Modal for URL Broker */}
+      {showUrlBrokerAuth && urlBroker && (
+          <div className="modal-overlay animate-fade-in" onClick={handleCancelUrlAuth}>
+              <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '450px' }}>
+                  <div style={{ padding: '24px', borderBottom: '1px solid var(--bg-hover)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}><Key color="var(--accent)" /> 连接自定义房间</h3>
+                      <button onClick={handleCancelUrlAuth} className="btn-icon"><X size={24}/></button>
+                  </div>
+                  <div style={{ padding: '24px' }}>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px', lineHeight: 1.5 }}>
+                          该房间位于自定义 MQTT 服务器 <strong style={{color: 'var(--text-primary)'}}>{urlBroker.host}</strong>。请输入访问凭据以继续：
+                      </p>
+                      <div className="flex flex-col gap-4">
+                          <input 
+                              type="text" 
+                              placeholder="用户名" 
+                              className="styled-input" 
+                              value={urlBrokerAuthForm.username} 
+                              onChange={e => setUrlBrokerAuthForm({...urlBrokerAuthForm, username: e.target.value})} 
+                          />
+                          <input 
+                              type="password" 
+                              placeholder="密码" 
+                              className="styled-input" 
+                              value={urlBrokerAuthForm.password} 
+                              onChange={e => setUrlBrokerAuthForm({...urlBrokerAuthForm, password: e.target.value})} 
+                          />
+                      </div>
+                      {testResult === 'fail' && (
+                          <div style={{ marginTop: '16px', color: '#ef5350', fontSize: '14px', backgroundColor: 'rgba(239, 83, 80, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                              <ShieldAlert size={14} style={{ display: 'inline', marginRight: '6px' }} />
+                              {testError || '连接失败，请检查用户名或密码。'}
+                          </div>
+                      )}
+                  </div>
+                  <div style={{ padding: '24px', backgroundColor: 'var(--bg-hover)', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                      <button onClick={handleCancelUrlAuth} className="btn-primary" style={{ backgroundColor: 'transparent', color: 'var(--text-muted)', padding: '10px 16px' }}>取消</button>
+                      <button 
+                          onClick={handleJoinWithUrlBroker} 
+                          disabled={isTesting} 
+                          className="btn-primary" 
+                          style={{ minWidth: '120px' }}
+                      >
+                          {isTesting ? '正在连接...' : testResult === 'success' ? '连接成功' : '确认并连接'}
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
 
       {/* Broker Modal */}
       {showBrokerModal && (

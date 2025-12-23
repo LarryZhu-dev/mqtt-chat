@@ -377,16 +377,16 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ user, room: initialRoom, onL
       <VipEffectsLayer effect={activeVipEffect} triggerUser={vipTriggerUser} onComplete={handleVipComplete} />
 
       <header className="chat-header">
-        <div className="flex items-center gap-4 overflow-hidden">
-             <div className="flex items-center justify-center" style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--bg-input)' }}>
+        <div className="flex items-center gap-4 overflow-hidden h-full">
+             <div className="flex items-center justify-center shrink-0" style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--bg-input)' }}>
                 {isConnected ? <Wifi size={18} color="#4caf50" /> : <WifiOff size={18} color="#ef5350" />}
              </div>
-             <div className="flex flex-col justify-center overflow-hidden">
-                 <h2 className="flex items-center gap-2 margin-0">
+             <div className="room-info-block">
+                 <h2 className="flex items-center gap-2">
                      {roomConfig?.topicName || initialRoom.topicName}
                      {initialRoom.isCustom ? <Server size={14} color="var(--accent)" /> : roomConfig && (roomConfig.isPublic ? <Globe size={14} color="var(--accent)" /> : <Lock size={14} color="var(--text-secondary)" />)}
                  </h2>
-                 <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'monospace', display: 'flex', gap: '8px' }}>
+                 <div className="room-subtitle">
                     <span>ID: {initialRoom.id}</span>
                     <button onClick={handleCopyLink} className="btn-icon" style={{ padding: '0 4px', width: 'auto', height: 'auto' }} title="点击复制链接">{isCopied ? <Check size={12} color="#4caf50" /> : <Copy size={12} color="var(--text-secondary)" />}</button>
                  </div>

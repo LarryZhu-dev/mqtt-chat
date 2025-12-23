@@ -356,7 +356,10 @@ body {
 .message-row.others { justify-content: flex-start; }
 .message-mentioned { background-color: rgba(138, 180, 248, 0.08); }
 
-.message-container { display: flex; flex-direction: column; gap: 4px; max-width: 85%; }
+.message-container { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
+.me .message-container { align-items: flex-end; }
+.others .message-container { align-items: flex-start; }
+
 .bubble { 
   padding: 10px 14px; 
   border-radius: 18px; 
@@ -365,6 +368,7 @@ body {
   position: relative;
   box-shadow: var(--shadow-sm);
   word-break: break-word;
+  width: fit-content;
 }
 .me .bubble { background-color: var(--accent); color: #202124; border-bottom-right-radius: 4px; }
 .others .bubble { background-color: var(--bg-hover); color: var(--text-primary); border-bottom-left-radius: 4px; }

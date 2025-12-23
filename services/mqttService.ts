@@ -1,13 +1,14 @@
 
 import mqtt from 'mqtt';
-import { ChatMessage, PresencePayload, PublicRoomPayload, Reaction, RoomConfig, VotePayload } from '../types';
+import { ChatMessage, PresencePayload, PublicRoomPayload, Reaction, RoomConfig, VotePayload, BrokerConfig } from '../types';
 
-// EMQX Public Broker
-const BROKER_URL = 'wss://broker.emqx.io:8084/mqtt';
+// EMQX Public Broker Default
+const DEFAULT_BROKER_URL = 'wss://broker.emqx.io:8084/mqtt';
 
 export class MqttService {
   client: mqtt.MqttClient | null = null;
   clientId: string;
+  brokerConfig: BrokerConfig | null;
   callbacks: {
     onMessage: (msg: ChatMessage) => void;
     onPresence: (payload: PresencePayload) => void;
@@ -18,8 +19,9 @@ export class MqttService {
     onVote: (payload: VotePayload) => void;
   };
 
-  constructor(clientId: string) {
+  constructor(clientId: string, brokerConfig: BrokerConfig | null = null) {
     this.clientId = clientId;
+    this.brokerConfig = brokerConfig;
     this.callbacks = {
       onMessage: () => {},
       onPresence: () => {},
@@ -31,9 +33,12 @@ export class MqttService {
     };
   }
 
-  // Updated to support Last Will and Testament (LWT)
   connect(onConnected: () => void, lwtOptions?: { topic: string, payload: string }) {
-    console.log(`Connecting to ${BROKER_URL} as ${this.clientId}`);
+    const url = this.brokerConfig 
+      ? `wss://${this.brokerConfig.host}:${this.brokerConfig.port}${this.brokerConfig.path.startsWith('/') ? '' : '/'}${this.brokerConfig.path}`
+      : DEFAULT_BROKER_URL;
+
+    console.log(`Connecting to ${url} as ${this.clientId}`);
     
     const options: mqtt.IClientOptions = {
       clientId: this.clientId,
@@ -45,7 +50,14 @@ export class MqttService {
       }
     };
 
-    // If LWT is provided (used when joining a room to handle ungraceful disconnects)
+    if (this.brokerConfig?.username) {
+        options.username = this.brokerConfig.username;
+    }
+    if (this.brokerConfig?.password) {
+        options.password = this.brokerConfig.password;
+    }
+
+    // If LWT is provided
     if (lwtOptions) {
         options.will = {
             topic: lwtOptions.topic,
@@ -55,7 +67,7 @@ export class MqttService {
         };
     }
 
-    this.client = mqtt.connect(BROKER_URL, options);
+    this.client = mqtt.connect(url, options);
 
     this.client.on('connect', () => {
       console.log('MQTT Connected');
@@ -74,7 +86,6 @@ export class MqttService {
 
     this.client.on('message', (topic, payload, packet) => {
       try {
-        // Handle empty payload (deletion)
         if (payload.length === 0) {
             if (topic.startsWith('darkmqtt/lobby/')) {
                 const roomId = topic.split('/').pop();
@@ -126,16 +137,13 @@ export class MqttService {
       this.client.unsubscribe(`${root}/vote`);
   }
 
-  // Config Management (Retained)
   publishRoomConfig(roomId: string, config: RoomConfig) {
       if (!this.client) return;
       this.client.publish(`darkmqtt/room/${roomId}/config`, JSON.stringify(config), { retain: true });
   }
 
-  // Voting
   sendVote(roomId: string, payload: VotePayload) {
       if (!this.client) return;
-      // Voting messages should not be retained, they are real-time events
       this.client.publish(`darkmqtt/room/${roomId}/vote`, JSON.stringify(payload));
   }
 
@@ -156,7 +164,6 @@ export class MqttService {
 
   sendPresence(roomId: string, payload: PresencePayload) {
       if (!this.client) return;
-      // Use LWT behavior manually if needed, but for now standard publish
       this.client.publish(`darkmqtt/room/${roomId}/presence`, JSON.stringify(payload));
   }
 
@@ -165,7 +172,6 @@ export class MqttService {
       this.client.publish(`darkmqtt/room/${roomId}/reactions`, JSON.stringify({ targetId, reaction }));
   }
 
-  // Update lobby with expiry. If nobody updates for 15s, it vanishes.
   updatePublicRoomListing(roomId: string, topicName: string, userCount: number) {
       if (!this.client) return;
       const payload: PublicRoomPayload = { roomId, topicName, userCount };
@@ -178,7 +184,6 @@ export class MqttService {
       });
   }
 
-  // Explicitly delete lobby entry
   clearPublicRoomListing(roomId: string) {
       if (!this.client) return;
       this.client.publish(`darkmqtt/lobby/${roomId}`, '', { retain: true });

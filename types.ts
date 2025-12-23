@@ -7,6 +7,14 @@ export interface UserProfile {
   vipCode?: string; // Added for VIP effects
 }
 
+export interface BrokerConfig {
+  host: string;
+  port: number;
+  username?: string;
+  password?: string;
+  path: string;
+}
+
 // Internal type for tracking activity
 export interface OnlineUser extends UserProfile {
   lastSeen: number;
@@ -52,6 +60,8 @@ export interface RoomInfo {
   isPublic: boolean;
   onlineCount: number;
   lastActivity: number;
+  isCustom?: boolean;
+  customBroker?: BrokerConfig;
 }
 
 export interface PresencePayload {

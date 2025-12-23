@@ -67,10 +67,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     onMention(username);
                 }}
                 title="右键 @ TA"
-                style={{ cursor: 'context-menu' }}
+                style={{ cursor: 'context-menu', borderRadius: '8px' }}
             >
             {avatarSrc ? (
-                <img src={avatarSrc} alt="av" />
+                <img src={avatarSrc} alt="av" style={{ imageRendering: avatarSrc.includes('dicebear') ? 'pixelated' : 'auto' }} />
             ) : (
                 <div className="avatar-placeholder">
                 {username.substring(0, 1).toUpperCase()}

@@ -61,7 +61,21 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
      // If entering via URL for a custom broker
      if (urlBroker) {
          setRoomType(2);
-         setShowUrlBrokerAuth(true);
+         
+         // Check if we have matching saved credentials
+         const stored = getStoredBroker();
+         if (stored && stored.host === urlBroker.host && stored.port === urlBroker.port) {
+             // We have stored credentials for this host, pre-fill them
+             setUrlBrokerAuthForm({
+                 username: stored.username || '',
+                 password: stored.password || ''
+             });
+             // We still show the modal to let user confirm/change, 
+             // but it's pre-filled as per "reuse stored credentials"
+             setShowUrlBrokerAuth(true);
+         } else {
+             setShowUrlBrokerAuth(true);
+         }
      }
   }, [urlBroker]);
 
@@ -130,6 +144,10 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
           setTestResult('success'); 
           setIsTesting(false);
           
+          // Save successful config for future use
+          saveBroker(fullConfig);
+          setSavedBroker(fullConfig);
+          
           // If successful, immediately join the room
           setTimeout(() => {
               setShowUrlBrokerAuth(false);
@@ -168,20 +186,37 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
 
     let activeBroker: BrokerConfig | undefined = (roomType === 2) ? (urlBroker || savedBroker || undefined) : undefined;
     
-    // If it's a custom room and we are missing credentials (only applicable for the manually configed one, 
-    // shared link handled by handleJoinWithUrlBroker)
-    if (roomType === 2 && !activeBroker) { setError('请先配置自定义 Broker'); return; }
+    // If it's a custom room and we are missing credentials
+    if (roomType === 2 && !activeBroker) { 
+        setError('请先配置自定义 Broker'); 
+        return; 
+    }
 
     setIsJoining(true);
     setTimeout(() => {
         const user: UserProfile = { clientId: initialUser?.clientId || `web_${generateUUID()}`, username: username.trim(), avatarBase64: avatar, avatarColor: avatarColor, vipCode: initialUser?.vipCode };
-        const room: RoomInfo = { id: cleanRoomId, topicName: topicInput.trim() || cleanRoomId, isPublic: roomType === 1, onlineCount: 0, lastActivity: Date.now(), isCustom: roomType === 2, customBroker: activeBroker };
+        
+        // Final sanity check for custom broker
+        let finalBroker = activeBroker;
+        if (roomType === 2 && urlBroker) {
+            // If we are using a URL broker, combine with any credentials we entered/saved
+            const stored = getStoredBroker();
+            if (stored && stored.host === urlBroker.host) {
+                finalBroker = stored;
+            }
+        }
+
+        const room: RoomInfo = { id: cleanRoomId, topicName: topicInput.trim() || cleanRoomId, isPublic: roomType === 1, onlineCount: 0, lastActivity: Date.now(), isCustom: roomType === 2, customBroker: finalBroker };
+        
         const newUrl = new URL(window.location.href);
         newUrl.searchParams.set('room', cleanRoomId);
-        if (roomType === 2 && activeBroker) {
-            const { password, ...safeBroker } = activeBroker;
+        if (roomType === 2 && finalBroker) {
+            const { password, ...safeBroker } = finalBroker;
             newUrl.searchParams.set('b', btoa(JSON.stringify(safeBroker)));
-        } else newUrl.searchParams.delete('b');
+        } else {
+            newUrl.searchParams.delete('b');
+        }
+        
         window.history.pushState({}, '', newUrl);
         onJoin(user, room, { saveUsername: isCustomUsername, saveAvatar: isCustomAvatar });
     }, 400);
@@ -202,7 +237,10 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
         style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '12px', zIndex: 100 }}
       >
           <button 
-            onClick={() => setShowBrokerModal(true)}
+            onClick={() => {
+                setBrokerForm(savedBroker || { host: '', port: 8084, username: '', password: '', path: '/mqtt' });
+                setShowBrokerModal(true);
+            }}
             className="btn-icon"
             style={{ 
                 backgroundColor: savedBroker ? 'rgba(138, 180, 248, 0.1)' : 'var(--bg-surface)', 
@@ -298,7 +336,7 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
             </div>
         </div>
 
-        {/* (2, 1) - Privacy Notice (Animated to Bottom Left) */}
+        {/* (2, 1) - Privacy Notice */}
         <div className={clsx("lobby-card", isJoining ? "animate-panel-bl-out" : "animate-panel-bl-in")}>
             <h3 style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', margin: '0 0 12px 0', color: 'var(--text-secondary)' }}><ShieldAlert size={18} /> 隐私提示</h3>
             <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
@@ -306,11 +344,11 @@ export const Lobby: React.FC<LobbyProps> = ({ initialUser, onJoin, publicRooms, 
             </p>
         </div>
 
-        {/* (2, 2) - Disclaimer (Animated to Bottom Right) */}
+        {/* (2, 2) - Disclaimer */}
         <div className={clsx("lobby-card", isJoining ? "animate-panel-br-out" : "animate-panel-br-in")}>
             <h3 style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', margin: '0 0 12px 0', color: 'var(--text-secondary)' }}><Info size={18} /> 免责声明</h3>
             <p style={{ fontSize: '12px', color: 'rgba(154, 160, 166, 0.7)', lineHeight: 1.5, margin: 0 }}>
-                本平台仅提供 MQTT 客户端。用户信息均保存在本地存储，本系统不保存任何信息（自定义服务器除外）。用户发表言论不代表本平台观点。代码完全开源。
+                本平台仅提供 MQTT 客户端。用户信息均保存在本地存储，本系统不保存任何信息。用户发表言论不代表本平台观点。代码完全开源。
             </p>
             <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.5 }}>
                <Github size={14} /> <span style={{ fontSize: '10px' }}>Open Source</span>
